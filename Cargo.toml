@@ -1,9 +1,20 @@
 [package]
 name = "unicop"
 version = "0.1.0"
-edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = """
+Tool for scanning source code for potentially malicious unicode code points.
+Helps prevent Trojan source bidi attacks, homoglyph attacks, invisible character attacks etc.
+Intended to run manually or in CI to help with supply chain security.
+"""
+keywords = ["linter", "unicode", "homoglyph", "bidi", "attack"]
+categories = ["command-line-utilities", "development-tools"]
+authors = ["Mullvad VPN"]
+repository = "https://github.com/mullvad/unicop"
+license = "GPL-3.0"
+
+edition = "2021"
+rust-version = "1.79.0"
 
 [dependencies]
 miette = { version = "7.2.0", features = ["fancy"] }
