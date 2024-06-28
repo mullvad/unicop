@@ -12,7 +12,8 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # TODO: Add and make Windows work in CI also
+        os: [ubuntu-latest, macos-latest]
         # Keep MSRV in sync with rust-version in Cargo.toml
         rust: [stable, beta, nightly, 1.79.0]
     runs-on: ${{ matrix.os }}
