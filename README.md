@@ -34,3 +34,56 @@ $ unicop examples/homoglyph.js examples/invisible.js
 
 
 ```
+
+## Todo
+
+Things left to implement to make this usable
+
+* Recursively scan a directory. Check all files matching some criteria (extension matching compatible parsers?)
+* Add language detection machinery (mapping from file extension to tree-sitter parser)
+* Some way to specify an allowlist and denylist of unicode code points per language parser. This should have
+  sane defaults: Comments and string literals allow all unicode except Bidi characters, all other kinds of code deny all unicode.
+
+```toml
+[global]
+default = {
+  allow = ["ascii"]
+}
+comment = {
+  allow = ["*"]
+  deny = ["bidi"]
+}
+string-literal = {
+  allow = ["*"]
+  deny = ["bidi"]
+}
+
+[language.rust]
+default = {
+  allow = ["emoji"]
+  deny = []
+}
+
+comment = {
+  allow = ["u+1234"],
+  deny = ["bidi"],
+}
+string-literal = {
+  allow = ["u+1234"],
+  deny = ["bidi"],
+}
+identifiers = {
+  deny = ["u+90"]
+}
+
+[language.javascript]
+paths = ["**/*.js"]
+default = {
+  allow = ["unicode"],
+  deny = ["bidi"],
+}
+
+[language.python]
+paths = ["./build", "run-tests", "*.py"]
+```
+

@@ -4,6 +4,9 @@ use std::fs;
 use miette::{miette, LabeledSpan, NamedSource, Severity};
 use unic_ucd_name::Name;
 
+mod config;
+mod rules;
+
 fn main() {
     for arg in env::args().skip(1) {
         check_file(&arg);
