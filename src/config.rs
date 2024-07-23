@@ -126,7 +126,7 @@ mod tests {
     #[should_panic]
     fn invalid_language() {
         static INVALID_LANGUAGE: &str = "[language.nonon]";
-        let config: Config = toml::from_str(INVALID_LANGUAGE).unwrap();
+        let _config: Config = toml::from_str(INVALID_LANGUAGE).unwrap();
     }
 
     #[test]
