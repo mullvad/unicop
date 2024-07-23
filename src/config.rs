@@ -53,7 +53,7 @@ fn unicode_notation_to_char(unicode_notation: &str) -> Result<char, InvalidChara
     let parse = |unicode_notation: &str| -> Option<char> {
         let hex_str_number = unicode_notation.strip_prefix("U+")?;
         let int_number = u32::from_str_radix(hex_str_number, 16).ok()?;
-        Some(char::from_u32(int_number)?)
+        char::from_u32(int_number)
     };
     parse(unicode_notation).ok_or_else(|| InvalidCharacterType(unicode_notation.to_owned()))
 }
