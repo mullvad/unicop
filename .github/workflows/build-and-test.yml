@@ -6,7 +6,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: --deny warnings
+  # TODO: Do not allow dead_code once crate is out of early prototyping stage
+  RUSTFLAGS: --deny warnings --allow dead_code
 
 jobs:
   build-and-test:
