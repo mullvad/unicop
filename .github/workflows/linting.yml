@@ -1,0 +1,28 @@
+---
+name: Rust linting
+on:
+  pull_request:
+    paths:
+      - .github/workflows/linting.yml
+      - '**/*.rs'
+      - Cargo.toml
+      - Cargo.lock
+  workflow_dispatch:
+jobs:
+  clippy-linting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17 # master at the time of writing this
+        with:
+          toolchain: stable
+          components: clippy
+
+      - name: Clippy check
+        env:
+          # TODO: Do not allow dead_code once crate is out of early prototyping stage
+          RUSTFLAGS: --deny warnings --allow dead_code
+        run: cargo clippy --locked --all-targets

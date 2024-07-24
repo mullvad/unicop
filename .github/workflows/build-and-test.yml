@@ -1,0 +1,61 @@
+---
+name: Build and test
+on:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # TODO: Do not allow dead_code once crate is out of early prototyping stage
+  RUSTFLAGS: --deny warnings --allow dead_code
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        # TODO: Add and make Windows work in CI also
+        os: [ubuntu-latest, macos-latest]
+        # Keep MSRV in sync with rust-version in Cargo.toml
+        rust: [stable, beta, nightly, 1.79.0]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17 # master at the time of writing this
+        with:
+          toolchain: ${{ matrix.rust }}
+
+      - name: Build
+        run: cargo --version && cargo build --all-targets --locked
+
+      - name: Test
+        run: cargo test --locked
+
+      # Make sure documentation builds without warnings (broken links etc)
+      - name: Generate documentation
+        if: matrix.rust == 'stable'
+        run: RUSTDOCFLAGS="--deny warnings" cargo doc
+
+  # Make sure the library builds with all dependencies downgraded to their
+  # oldest versions allowed by the semver spec. This ensures we have not
+  # under-specified any dependency
+  minimal-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17 # master at the time of writing this
+        with:
+          toolchain: stable
+
+      - name: Install nightly Rust
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17 # master at the time of writing this
+        with:
+          toolchain: nightly
+
+      - name: Downgrade dependencies to minimal versions
+        run: cargo +nightly update -Z minimal-versions
+
+      - name: Compile with minimal versions
+        run: cargo +stable build --all-targets --locked
