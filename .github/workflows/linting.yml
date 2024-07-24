@@ -14,12 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions-rs/toolchain@v1.0.6
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17 # master at the time of writing this
         with:
           toolchain: stable
-          profile: minimal
           components: clippy
-          default: true
 
       - name: Clippy check
         env:

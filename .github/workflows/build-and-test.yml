@@ -21,14 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af #v1.0.7
+      - uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17 # master at the time of writing this
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
-          default: true
 
       - name: Build
-        run: cargo build --all-targets --locked
+        run: cargo --version && cargo build --all-targets --locked
 
       - name: Test
         run: cargo test --locked
@@ -47,16 +45,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install stable Rust
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af #v1.0.7
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17 # master at the time of writing this
         with:
           toolchain: stable
-          profile: minimal
 
       - name: Install nightly Rust
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af #v1.0.7
+        uses: dtolnay/rust-toolchain@21dc36fb71dd22e3317045c0c31a3f4249868b17 # master at the time of writing this
         with:
           toolchain: nightly
-          profile: minimal
 
       - name: Downgrade dependencies to minimal versions
         run: cargo +nightly update -Z minimal-versions
