@@ -806,6 +806,7 @@ dependencies = [
  "unic-char-range",
  "unic-ucd-block",
  "unic-ucd-name",
+ "walkdir",
 ]
 
 [[package]]

@@ -1,5 +1,13 @@
 # Unicop
 
+## Usage
+
+```sh,ignore
+unicop [FILES]...
+```
+
+Where `[FILES]...` is a list of files or directory to check, default: `.`.
+
 ## Example
 
 ```console
