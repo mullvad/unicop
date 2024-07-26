@@ -99,4 +99,3 @@ default = {
 [language.python]
 paths = ["./build", "run-tests", "*.py"]
 ```
-
