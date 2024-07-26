@@ -3,21 +3,6 @@ pub enum Decision {
     Deny,
 }
 
-pub struct RuleChain {
-    pub rules: Vec<RuleSet>,
-}
-
-impl RuleChain {
-    pub fn decision(&self, c: char) -> Decision {
-        for ruleset in &self.rules {
-            if let Some(decision) = ruleset.decision(c) {
-                return decision;
-            }
-        }
-        Decision::Deny
-    }
-}
-
 #[derive(Debug, Eq, PartialEq, Default, serde::Deserialize)]
 pub struct RuleSet {
     #[serde(default)]
@@ -27,7 +12,7 @@ pub struct RuleSet {
 }
 
 impl RuleSet {
-    fn decision(&self, c: char) -> Option<Decision> {
+    pub fn decision(&self, c: char) -> Option<Decision> {
         let allow_specificity = self
             .allow
             .iter()

@@ -1,18 +1,91 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs;
+use std::io;
 use std::path::Path;
 
+use anyhow::Context;
+use config::CodeType;
+use config::Config;
+use config::Language;
 use miette::{miette, LabeledSpan, NamedSource, Severity};
+use rules::Decision;
+use rules::RuleSet;
 use unic_ucd_name::Name;
 
 mod config;
 mod rules;
 
-fn main() {
+// Replaces the previous idea of "RuleChain"s.
+struct RuleDispatcher {
+    user_config: Config,
+    default_config: Config,
+}
+
+impl RuleDispatcher {
+    pub fn decision(&self, c: char, language: Language, code_type: Option<CodeType>) -> Decision {
+        if let Some(decision) = Self::decision_for_config(&self.user_config, c, language, code_type)
+        {
+            return decision;
+        }
+        if let Some(decision) =
+            Self::decision_for_config(&self.default_config, c, language, code_type)
+        {
+            return decision;
+        }
+        Decision::Deny
+    }
+
+    // Rulechain:
+    // 1. Code type specific ruleset for specific language
+    // 2. Default ruleset for specific language
+    // 3. Code type specific ruleset in global section
+    // 4. Default rules in global section
+    fn decision_for_config(
+        config: &Config,
+        c: char,
+        language: Language,
+        code_type: Option<CodeType>,
+    ) -> Option<Decision> {
+        if let Some(language_rules) = config.language.get(&language) {
+            // 1.
+            if let Some(language_code_type_rules) =
+                code_type.and_then(|ct| language_rules.rules.code_type_rules.get(&ct))
+            {
+                if let Some(decision) = language_code_type_rules.decision(c) {
+                    return Some(decision);
+                }
+            }
+            // 2.
+            if let Some(decision) = language_rules.rules.default.decision(c) {
+                return Some(decision);
+            }
+        }
+        // 3.
+        if let Some(global_code_type_rules) =
+            code_type.and_then(|ct| config.global.code_type_rules.get(&ct))
+        {
+            if let Some(decision) = global_code_type_rules.decision(c) {
+                return Some(decision);
+            }
+        }
+        // 4.
+        if let Some(decision) = config.global.default.decision(c) {
+            return Some(decision);
+        }
+        // This config does not have any opinion on this character
+        None
+    }
+}
+
+fn main() -> anyhow::Result<()> {
     let mut args: Vec<String> = env::args().skip(1).collect();
     if args.is_empty() {
         args = vec![String::from(".")]
     }
+
+    let _config = get_config()?;
+
     for arg in args {
         for entry in walkdir::WalkDir::new(arg) {
             match entry {
@@ -22,6 +95,7 @@ fn main() {
             }
         }
     }
+    Ok(())
 }
 
 fn check_file(path: &Path) {
@@ -81,5 +155,45 @@ fn detect_language(path: &Path) -> Option<tree_sitter::Language> {
         // https://github.com/tree-sitter/tree-sitter-python/blob/master/package.json
         "py" => Some(tree_sitter_python::language()),
         _ => None,
+    }
+}
+
+fn get_config() -> anyhow::Result<Config> {
+    match std::fs::read_to_string("./unicop.toml") {
+        Ok(config_str) => toml::from_str(&config_str).context("Failed to parse config"),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(get_default_config()),
+        Err(e) => Err(e).context("Failed to read config file"),
+    }
+}
+
+/// Comments and string literals allow all unicode except Bidi characters,
+/// all other kinds of code deny all unicode.
+fn get_default_config() -> Config {
+    Config {
+        global: config::ConfigRules {
+            default: RuleSet {
+                allow: vec![],
+                deny: vec![],
+            },
+            code_type_rules: [
+                (
+                    config::CodeType::Comment,
+                    RuleSet {
+                        allow: vec![rules::CharacterType::Anything],
+                        deny: vec![rules::CharacterType::Bidi],
+                    },
+                ),
+                (
+                    config::CodeType::StringLiteral,
+                    RuleSet {
+                        allow: vec![rules::CharacterType::Anything],
+                        deny: vec![rules::CharacterType::Bidi],
+                    },
+                ),
+            ]
+            .into_iter()
+            .collect(),
+        },
+        language: HashMap::new(),
     }
 }

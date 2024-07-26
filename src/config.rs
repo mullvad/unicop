@@ -60,7 +60,7 @@ fn unicode_notation_to_char(unicode_notation: &str) -> Result<char, InvalidChara
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum CodeType {
+pub enum CodeType {
     Comment,
     StringLiteral,
     Identifiers,
@@ -68,34 +68,52 @@ enum CodeType {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum Language {
+pub enum Language {
     Rust,
     Javascript,
     Python,
 }
 
+static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "comment" => CodeType::Comment,
+    "block_comment" => CodeType::Comment,
+};
+
+impl Language {
+    pub fn lookup_code_type(&self, tree_sitter_code_type: &str) -> Option<CodeType> {
+        match self {
+            Language::Rust => RUST_CODE_TYPES.get(tree_sitter_code_type).copied(),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Default, serde::Deserialize)]
-struct ConfigRules {
+pub struct ConfigRules {
     #[serde(default)]
-    default: RuleSet,
+    pub default: RuleSet,
     #[serde(flatten)]
-    code_type_rules: HashMap<CodeType, RuleSet>,
+    pub code_type_rules: HashMap<CodeType, RuleSet>,
 }
 
 #[derive(Debug, Eq, PartialEq, serde::Deserialize)]
-struct LanguageRules {
+pub struct LanguageRules {
+    // None = Inherit default path globs
+    // Some([]) = No paths will ever match this language
+    // Some([...]) = Match every file against these glob patterns.
+    //               Run this language parser if at least one matches.
     #[serde(default)]
-    paths: Vec<String>,
+    pub paths: Option<Vec<String>>,
     #[serde(flatten)]
-    rules: ConfigRules,
+    pub rules: ConfigRules,
 }
 
 #[derive(Debug, Eq, PartialEq, Default, serde::Deserialize)]
-struct Config {
+pub struct Config {
     #[serde(default)]
-    global: ConfigRules,
+    pub global: ConfigRules,
     #[serde(default)]
-    language: HashMap<Language, LanguageRules>,
+    pub language: HashMap<Language, LanguageRules>,
 }
 
 #[cfg(test)]
@@ -170,7 +188,7 @@ deny = ["Tibetan"]
             language: HashMap::from([(
                 Language::Rust,
                 LanguageRules {
-                    paths: vec![],
+                    paths: None,
                     rules: ConfigRules {
                         default: RuleSet {
                             allow: vec![
