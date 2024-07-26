@@ -60,6 +60,7 @@ impl CharacterType {
             Self::CodePoint(rule_char) => *rule_char == c,
             Self::Range(range) => range.contains(c),
             Self::Bidi => [
+                // List of bidirectional formatting characters from https://en.wikipedia.org/wiki/Trojan_Source
                 '\u{202A}', '\u{202b}', '\u{202c}', '\u{202d}', '\u{202e}', '\u{2066}', '\u{2067}',
                 '\u{2068}', '\u{2069}',
             ]
