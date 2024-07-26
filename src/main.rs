@@ -18,15 +18,16 @@ mod rules;
 
 // Replaces the previous idea of "RuleChain"s.
 struct RuleDispatcher {
-    user_config: Config,
+    user_config: Option<Config>,
     default_config: Config,
 }
 
 impl RuleDispatcher {
     pub fn decision(&self, c: char, language: Language, code_type: Option<CodeType>) -> Decision {
-        if let Some(decision) = Self::decision_for_config(&self.user_config, c, language, code_type)
-        {
-            return decision;
+        if let Some(user_config) = &self.user_config {
+            if let Some(decision) = Self::decision_for_config(user_config, c, language, code_type) {
+                return decision;
+            }
         }
         if let Some(decision) =
             Self::decision_for_config(&self.default_config, c, language, code_type)
@@ -84,13 +85,18 @@ fn main() -> anyhow::Result<()> {
         args = vec![String::from(".")]
     }
 
-    let _config = get_config()?;
+    let default_config = get_default_config();
+    let user_config = get_user_config()?;
+    let dispatcher = RuleDispatcher {
+        user_config,
+        default_config,
+    };
 
     for arg in args {
         for entry in walkdir::WalkDir::new(arg) {
             match entry {
                 Err(err) => eprintln!("{:}", err),
-                Ok(entry) if entry.file_type().is_file() => check_file(entry.path()),
+                Ok(entry) if entry.file_type().is_file() => check_file(&dispatcher, entry.path()),
                 Ok(_) => {}
             }
         }
@@ -98,15 +104,15 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn check_file(path: &Path) {
-    let Some(lang) = detect_language(path) else {
+fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
+    let Some((lang, tslang)) = detect_language(path) else {
         return;
     };
     let filename = path.display().to_string();
     let src = fs::read_to_string(path).unwrap();
     let named_source = NamedSource::new(&filename, src.clone());
     let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&lang).expect("Error loading grammar");
+    parser.set_language(&tslang).expect("Error loading grammar");
     let tree = parser.parse(&src, None).unwrap();
     if tree.root_node().has_error() {
         println!(
@@ -123,9 +129,11 @@ fn check_file(path: &Path) {
             .root_node()
             .named_descendant_for_byte_range(off, off + ch.len_utf8())
             .unwrap();
-        let kind = node.kind();
-        if kind == "comment" || kind == "string_fragment" {
-            continue;
+        let tskind = node.kind();
+        let code_type = lang.lookup_code_type(tskind);
+        match dispatcher.decision(ch, lang, code_type) {
+            Decision::Allow => continue,
+            Decision::Deny => {}
         }
         let chname = Name::of(ch).unwrap();
         let report = miette!(
@@ -148,20 +156,22 @@ fn check_file(path: &Path) {
 // the Rust crates. So for now we have a simplified language-detection with hard-coded
 // configurations.
 // See https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-detection
-fn detect_language(path: &Path) -> Option<tree_sitter::Language> {
+fn detect_language(path: &Path) -> Option<(Language, tree_sitter::Language)> {
     match path.extension()?.to_str()? {
         // https://github.com/tree-sitter/tree-sitter-javascript/blob/master/package.json
-        "js" | "mjs" | "cjs" | "jsx" => Some(tree_sitter_javascript::language()),
+        "js" | "mjs" | "cjs" | "jsx" => {
+            Some((Language::Javascript, tree_sitter_javascript::language()))
+        }
         // https://github.com/tree-sitter/tree-sitter-python/blob/master/package.json
-        "py" => Some(tree_sitter_python::language()),
+        "py" => Some((Language::Python, tree_sitter_python::language())),
         _ => None,
     }
 }
 
-fn get_config() -> anyhow::Result<Config> {
+fn get_user_config() -> anyhow::Result<Option<Config>> {
     match std::fs::read_to_string("./unicop.toml") {
         Ok(config_str) => toml::from_str(&config_str).context("Failed to parse config"),
-        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(get_default_config()),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
         Err(e) => Err(e).context("Failed to read config file"),
     }
 }
@@ -169,10 +179,13 @@ fn get_config() -> anyhow::Result<Config> {
 /// Comments and string literals allow all unicode except Bidi characters,
 /// all other kinds of code deny all unicode.
 fn get_default_config() -> Config {
+    let ascii = unic_ucd_block::BlockIter::new()
+        .find(|b| b.name == "Basic Latin")
+        .unwrap();
     Config {
         global: config::ConfigRules {
             default: RuleSet {
-                allow: vec![],
+                allow: vec![rules::CharacterType::Block(ascii)],
                 deny: vec![],
             },
             code_type_rules: [

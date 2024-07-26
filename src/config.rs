@@ -79,11 +79,23 @@ static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "block_comment" => CodeType::Comment,
 };
 
+static JAVASCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "comment" => CodeType::Comment,
+    "block_comment" => CodeType::Comment,
+    "string_fragment" => CodeType::StringLiteral,
+};
+
+static PYTHON_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "string_content" => CodeType::StringLiteral,
+    "comment" => CodeType::Comment,
+};
+
 impl Language {
     pub fn lookup_code_type(&self, tree_sitter_code_type: &str) -> Option<CodeType> {
         match self {
+            Language::Javascript => JAVASCRIPT_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Rust => RUST_CODE_TYPES.get(tree_sitter_code_type).copied(),
-            _ => None,
+            Language::Python => PYTHON_CODE_TYPES.get(tree_sitter_code_type).copied(),
         }
     }
 }

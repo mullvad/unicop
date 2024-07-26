@@ -59,7 +59,11 @@ impl CharacterType {
         match self {
             Self::CodePoint(rule_char) => *rule_char == c,
             Self::Range(range) => range.contains(c),
-            Self::Bidi => todo!(),
+            Self::Bidi => [
+                '\u{202A}', '\u{202b}', '\u{202c}', '\u{202d}', '\u{202e}', '\u{2066}', '\u{2067}',
+                '\u{2068}', '\u{2069}',
+            ]
+            .contains(&c),
             Self::Block(block) => block.range.contains(c),
             Self::Anything => true,
         }
