@@ -25,7 +25,7 @@ struct RuleDispatcher {
 impl RuleDispatcher {
     pub fn language(&self, filepath: &Path) -> Option<Language> {
         if let Some(userconf) = &self.user_config {
-            if let Some(lang) = Self::language_for_config(&userconf, filepath) {
+            if let Some(lang) = Self::language_for_config(userconf, filepath) {
                 return Some(lang);
             }
         }
@@ -40,7 +40,7 @@ impl RuleDispatcher {
             if let Some(paths) = &langconf.paths {
                 for glob in paths {
                     if glob.matches_path(filepath) {
-                        return Some(lang.clone());
+                        return Some(*lang);
                     }
                 }
             }

@@ -140,7 +140,7 @@ where
         Some(v) => {
             let res = v
                 .iter()
-                .map(|s| glob::Pattern::new(&s))
+                .map(|s| glob::Pattern::new(s))
                 .collect::<Result<Vec<glob::Pattern>, _>>()
                 .map_err(serde::de::Error::custom)?;
             Ok(Some(res))
