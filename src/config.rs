@@ -75,8 +75,10 @@ pub enum Language {
 }
 
 static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
-    "comment" => CodeType::Comment,
-    "block_comment" => CodeType::Comment,
+    "doc_comment" => CodeType::Comment,
+    "line_comment" => CodeType::Comment,
+    "string_content" => CodeType::StringLiteral,
+    "char_literal" => CodeType::StringLiteral,
 };
 
 static JAVASCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
@@ -98,6 +100,14 @@ impl Language {
             Language::Python => PYTHON_CODE_TYPES.get(tree_sitter_code_type).copied(),
         }
     }
+
+    pub fn grammar(&self) -> tree_sitter::Language {
+        match self {
+            Language::Javascript => tree_sitter_javascript::language(),
+            Language::Python => tree_sitter_python::language(),
+            Language::Rust => tree_sitter_rust::language(),
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Default, serde::Deserialize)]
@@ -114,10 +124,28 @@ pub struct LanguageRules {
     // Some([]) = No paths will ever match this language
     // Some([...]) = Match every file against these glob patterns.
     //               Run this language parser if at least one matches.
-    #[serde(default)]
-    pub paths: Option<Vec<String>>,
+    #[serde(default, deserialize_with = "deserialize_pattern")]
+    pub paths: Option<Vec<glob::Pattern>>,
     #[serde(flatten)]
     pub rules: ConfigRules,
+}
+
+fn deserialize_pattern<'de, D>(deserializer: D) -> Result<Option<Vec<glob::Pattern>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s: Option<Vec<String>> = serde::Deserialize::deserialize(deserializer)?;
+    match s {
+        None => Ok(None),
+        Some(v) => {
+            let res = v
+                .iter()
+                .map(|s| glob::Pattern::new(&s))
+                .collect::<Result<Vec<glob::Pattern>, _>>()
+                .map_err(serde::de::Error::custom)?;
+            Ok(Some(res))
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Default, serde::Deserialize)]
@@ -171,6 +199,9 @@ deny = ["*"]
 allow = ["*"]
 deny = ["bidi"]
 
+[language.rust]
+paths = ["**/*.rs"]
+
 [language.rust.default]
 allow = ["Tibetan", "U+9000"]
 deny = ["U+5000..U+5004"]
@@ -200,7 +231,7 @@ deny = ["Tibetan"]
             language: HashMap::from([(
                 Language::Rust,
                 LanguageRules {
-                    paths: None,
+                    paths: Some(vec![glob::Pattern::new("**/*.rs").unwrap()]),
                     rules: ConfigRules {
                         default: RuleSet {
                             allow: vec![

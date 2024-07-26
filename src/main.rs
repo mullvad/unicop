@@ -23,6 +23,31 @@ struct RuleDispatcher {
 }
 
 impl RuleDispatcher {
+    pub fn language(&self, filepath: &Path) -> Option<Language> {
+        if let Some(userconf) = &self.user_config {
+            if let Some(lang) = Self::language_for_config(&userconf, filepath) {
+                return Some(lang);
+            }
+        }
+        if let Some(lang) = Self::language_for_config(&self.default_config, filepath) {
+            return Some(lang);
+        }
+        None
+    }
+
+    fn language_for_config(config: &Config, filepath: &Path) -> Option<Language> {
+        for (lang, langconf) in &config.language {
+            if let Some(paths) = &langconf.paths {
+                for glob in paths {
+                    if glob.matches_path(filepath) {
+                        return Some(lang.clone());
+                    }
+                }
+            }
+        }
+        None
+    }
+
     pub fn decision(&self, c: char, language: Language, code_type: Option<CodeType>) -> Decision {
         if let Some(user_config) = &self.user_config {
             if let Some(decision) = Self::decision_for_config(user_config, c, language, code_type) {
@@ -105,14 +130,16 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
-    let Some((lang, tslang)) = detect_language(path) else {
+    let Some(lang) = dispatcher.language(path) else {
         return;
     };
     let filename = path.display().to_string();
     let src = fs::read_to_string(path).unwrap();
     let named_source = NamedSource::new(&filename, src.clone());
     let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&tslang).expect("Error loading grammar");
+    parser
+        .set_language(&lang.grammar())
+        .expect("Error loading grammar");
     let tree = parser.parse(&src, None).unwrap();
     if tree.root_node().has_error() {
         println!(
@@ -147,24 +174,6 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
         )
         .with_source_code(named_source.clone());
         println!("{:?}", report);
-    }
-}
-
-// Tree-sitter grammars include some configurations to help decide whether the language applies to
-// a given file.
-// Unfortunately, neither the language-detection algorithm nor the configurations are included in
-// the Rust crates. So for now we have a simplified language-detection with hard-coded
-// configurations.
-// See https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-detection
-fn detect_language(path: &Path) -> Option<(Language, tree_sitter::Language)> {
-    match path.extension()?.to_str()? {
-        // https://github.com/tree-sitter/tree-sitter-javascript/blob/master/package.json
-        "js" | "mjs" | "cjs" | "jsx" => {
-            Some((Language::Javascript, tree_sitter_javascript::language()))
-        }
-        // https://github.com/tree-sitter/tree-sitter-python/blob/master/package.json
-        "py" => Some((Language::Python, tree_sitter_python::language())),
-        _ => None,
     }
 }
 
@@ -207,6 +216,33 @@ fn get_default_config() -> Config {
             .into_iter()
             .collect(),
         },
-        language: HashMap::new(),
+        language: HashMap::from([
+            (
+                Language::Rust,
+                config::LanguageRules {
+                    paths: Some(vec![glob::Pattern::new("**/*.rs").unwrap()]),
+                    rules: Default::default(),
+                },
+            ),
+            (
+                Language::Python,
+                config::LanguageRules {
+                    paths: Some(vec![glob::Pattern::new("**/*.py").unwrap()]),
+                    rules: Default::default(),
+                },
+            ),
+            (
+                Language::Javascript,
+                config::LanguageRules {
+                    paths: Some(vec![
+                        glob::Pattern::new("**/*.js").unwrap(),
+                        glob::Pattern::new("**/*.mjs").unwrap(),
+                        glob::Pattern::new("**/*.cjs").unwrap(),
+                        glob::Pattern::new("**/*.jsx").unwrap(),
+                    ]),
+                    rules: Default::default(),
+                },
+            ),
+        ]),
     }
 }

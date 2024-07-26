@@ -766,6 +766,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tree-sitter-rust"
+version = "0.21.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "277690f420bf90741dea984f3da038ace46c4fe6047cba57a66822226cde1c93"
+dependencies = [
+ "cc",
+ "tree-sitter",
+]
+
+[[package]]
 name = "trycmd"
 version = "0.15.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -874,6 +884,7 @@ dependencies = [
  "tree-sitter",
  "tree-sitter-javascript",
  "tree-sitter-python",
+ "tree-sitter-rust",
  "trycmd",
  "unic-char-range",
  "unic-ucd-block",
