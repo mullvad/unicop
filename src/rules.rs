@@ -3,21 +3,6 @@ pub enum Decision {
     Deny,
 }
 
-pub struct RuleChain {
-    pub rules: Vec<RuleSet>,
-}
-
-impl RuleChain {
-    pub fn decision(&self, c: char) -> Decision {
-        for ruleset in &self.rules {
-            if let Some(decision) = ruleset.decision(c) {
-                return decision;
-            }
-        }
-        Decision::Deny
-    }
-}
-
 #[derive(Debug, Eq, PartialEq, Default, serde::Deserialize)]
 pub struct RuleSet {
     #[serde(default)]
@@ -27,7 +12,7 @@ pub struct RuleSet {
 }
 
 impl RuleSet {
-    fn decision(&self, c: char) -> Option<Decision> {
+    pub fn decision(&self, c: char) -> Option<Decision> {
         let allow_specificity = self
             .allow
             .iter()
@@ -74,7 +59,12 @@ impl CharacterType {
         match self {
             Self::CodePoint(rule_char) => *rule_char == c,
             Self::Range(range) => range.contains(c),
-            Self::Bidi => todo!(),
+            Self::Bidi => [
+                // List of bidirectional formatting characters from https://en.wikipedia.org/wiki/Trojan_Source
+                '\u{202A}', '\u{202b}', '\u{202c}', '\u{202d}', '\u{202e}', '\u{2066}', '\u{2067}',
+                '\u{2068}', '\u{2069}',
+            ]
+            .contains(&c),
             Self::Block(block) => block.range.contains(c),
             Self::Anything => true,
         }

@@ -60,7 +60,7 @@ fn unicode_notation_to_char(unicode_notation: &str) -> Result<char, InvalidChara
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum CodeType {
+pub enum CodeType {
     Comment,
     StringLiteral,
     Identifiers,
@@ -68,34 +68,92 @@ enum CodeType {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum Language {
+pub enum Language {
     Rust,
     Javascript,
     Python,
 }
 
+static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "doc_comment" => CodeType::Comment,
+    "line_comment" => CodeType::Comment,
+    "string_content" => CodeType::StringLiteral,
+    "char_literal" => CodeType::StringLiteral,
+};
+
+static JAVASCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "comment" => CodeType::Comment,
+    "block_comment" => CodeType::Comment,
+    "string_fragment" => CodeType::StringLiteral,
+};
+
+static PYTHON_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "string_content" => CodeType::StringLiteral,
+    "comment" => CodeType::Comment,
+};
+
+impl Language {
+    pub fn lookup_code_type(&self, tree_sitter_code_type: &str) -> Option<CodeType> {
+        match self {
+            Language::Javascript => JAVASCRIPT_CODE_TYPES.get(tree_sitter_code_type).copied(),
+            Language::Rust => RUST_CODE_TYPES.get(tree_sitter_code_type).copied(),
+            Language::Python => PYTHON_CODE_TYPES.get(tree_sitter_code_type).copied(),
+        }
+    }
+
+    pub fn grammar(&self) -> tree_sitter::Language {
+        match self {
+            Language::Javascript => tree_sitter_javascript::language(),
+            Language::Python => tree_sitter_python::language(),
+            Language::Rust => tree_sitter_rust::language(),
+        }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Default, serde::Deserialize)]
-struct ConfigRules {
+pub struct ConfigRules {
     #[serde(default)]
-    default: RuleSet,
+    pub default: RuleSet,
     #[serde(flatten)]
-    code_type_rules: HashMap<CodeType, RuleSet>,
+    pub code_type_rules: HashMap<CodeType, RuleSet>,
 }
 
 #[derive(Debug, Eq, PartialEq, serde::Deserialize)]
-struct LanguageRules {
-    #[serde(default)]
-    paths: Vec<String>,
+pub struct LanguageRules {
+    // None = Inherit default path globs
+    // Some([]) = No paths will ever match this language
+    // Some([...]) = Match every file against these glob patterns.
+    //               Run this language parser if at least one matches.
+    #[serde(default, deserialize_with = "deserialize_pattern")]
+    pub paths: Option<Vec<glob::Pattern>>,
     #[serde(flatten)]
-    rules: ConfigRules,
+    pub rules: ConfigRules,
+}
+
+fn deserialize_pattern<'de, D>(deserializer: D) -> Result<Option<Vec<glob::Pattern>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s: Option<Vec<String>> = serde::Deserialize::deserialize(deserializer)?;
+    match s {
+        None => Ok(None),
+        Some(v) => {
+            let res = v
+                .iter()
+                .map(|s| glob::Pattern::new(s))
+                .collect::<Result<Vec<glob::Pattern>, _>>()
+                .map_err(serde::de::Error::custom)?;
+            Ok(Some(res))
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Default, serde::Deserialize)]
-struct Config {
+pub struct Config {
     #[serde(default)]
-    global: ConfigRules,
+    pub global: ConfigRules,
     #[serde(default)]
-    language: HashMap<Language, LanguageRules>,
+    pub language: HashMap<Language, LanguageRules>,
 }
 
 #[cfg(test)]
@@ -141,6 +199,9 @@ deny = ["*"]
 allow = ["*"]
 deny = ["bidi"]
 
+[language.rust]
+paths = ["**/*.rs"]
+
 [language.rust.default]
 allow = ["Tibetan", "U+9000"]
 deny = ["U+5000..U+5004"]
@@ -170,7 +231,7 @@ deny = ["Tibetan"]
             language: HashMap::from([(
                 Language::Rust,
                 LanguageRules {
-                    paths: vec![],
+                    paths: Some(vec![glob::Pattern::new("**/*.rs").unwrap()]),
                     rules: ConfigRules {
                         default: RuleSet {
                             allow: vec![
