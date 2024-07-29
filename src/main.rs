@@ -15,6 +15,7 @@ use unic_ucd_name::Name;
 
 mod config;
 mod rules;
+mod unicode_blocks;
 
 // Replaces the previous idea of "RuleChain"s.
 struct RuleDispatcher {
@@ -188,13 +189,10 @@ fn get_user_config() -> anyhow::Result<Option<Config>> {
 /// Comments and string literals allow all unicode except Bidi characters,
 /// all other kinds of code deny all unicode.
 fn get_default_config() -> Config {
-    let ascii = unic_ucd_block::BlockIter::new()
-        .find(|b| b.name == "Basic Latin")
-        .unwrap();
     Config {
         global: config::ConfigRules {
             default: RuleSet {
-                allow: vec![rules::CharacterType::Block(ascii)],
+                allow: vec![rules::CharacterType::Block(&unicode_blocks::BASIC_LATIN)],
                 deny: vec![],
             },
             code_type_rules: [

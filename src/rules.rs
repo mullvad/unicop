@@ -45,11 +45,11 @@ pub enum CharacterType {
     /// Single character (eg. "U+9000")
     CodePoint(char),
     /// An inclusive range of characters (eg. "U+1400..U+1409")
-    Range(unic_char_range::CharRange),
+    Range(std::ops::RangeInclusive<char>),
     /// All bidirectional control characters (right to left etc)
     Bidi,
     /// Named ranges of characters (eg. "Tibetan", "Box Drawing")
-    Block(unic_ucd_block::Block),
+    Block(&'static std::ops::RangeInclusive<char>),
     /// Any possible character.
     Anything,
 }
@@ -58,14 +58,14 @@ impl CharacterType {
     fn matches(&self, c: char) -> bool {
         match self {
             Self::CodePoint(rule_char) => *rule_char == c,
-            Self::Range(range) => range.contains(c),
+            Self::Range(range) => range.contains(&c),
             Self::Bidi => [
                 // List of bidirectional formatting characters from https://en.wikipedia.org/wiki/Trojan_Source
                 '\u{202A}', '\u{202b}', '\u{202c}', '\u{202d}', '\u{202e}', '\u{2066}', '\u{2067}',
                 '\u{2068}', '\u{2069}',
             ]
             .contains(&c),
-            Self::Block(block) => block.range.contains(c),
+            Self::Block(range) => range.contains(&c),
             Self::Anything => true,
         }
     }
@@ -88,7 +88,7 @@ impl PartialEq for CharacterType {
             (CodePoint(self_c), CodePoint(other_c)) => self_c == other_c,
             (Range(self_r), Range(other_r)) => self_r == other_r,
             (Bidi, Bidi) => true,
-            (Block(self_block), Block(other_block)) => self_block.name == other_block.name,
+            (Block(self_range), Block(other_range)) => self_range == other_range,
             (Anything, Anything) => true,
             _ => false,
         }
