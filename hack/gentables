@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+import io
+import urllib.request
+import csv
+
+resp = urllib.request.urlopen("https://www.unicode.org/Public/UNIDATA/UnicodeData.txt")
+datareader = csv.reader(io.TextIOWrapper(resp), delimiter=";")
+
+print("""static UNICODE_NAMES: phf::Map<u32, &'static str> = phf::phf_map! {""")
+for row in datareader:
+    codepoint, name, *_ = row
+    print(f'0x{codepoint} => "{name}",')
+print("};")
