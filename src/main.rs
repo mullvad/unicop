@@ -268,6 +268,13 @@ fn get_default_config() -> Config {
                 },
             ),
             (
+                Language::Go,
+                config::LanguageRules {
+                    paths: Some(vec![glob::Pattern::new("**/*.go").unwrap()]),
+                    rules: Default::default(),
+                },
+            ),
+            (
                 Language::Javascript,
                 config::LanguageRules {
                     paths: Some(vec![
