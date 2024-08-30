@@ -114,6 +114,8 @@ struct Args {
 }
 
 fn main() -> anyhow::Result<()> {
+    env_logger::init();
+
     let args = Args::parse();
 
     let default_config = get_default_config();
