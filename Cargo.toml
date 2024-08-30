@@ -32,6 +32,7 @@ tree-sitter-rust = "0.21.2"
 clap = { version = "4.5.16", features = ["derive"] }
 log = "0.4.22"
 env_logger = "0.11.5"
+tree-sitter-go = "0.21.2"
 
 [dev-dependencies]
 trycmd = "0.15.5"
