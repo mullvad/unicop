@@ -1,10 +1,11 @@
 use std::collections::HashMap;
-use std::env;
 use std::fs;
 use std::io;
 use std::path::Path;
+use std::path::PathBuf;
 
 use anyhow::Context;
+use clap::Parser;
 use config::CodeType;
 use config::Config;
 use config::Language;
@@ -105,21 +106,26 @@ impl RuleDispatcher {
     }
 }
 
+#[derive(Debug, clap::Parser)]
+#[command(arg_required_else_help = true)]
+struct Args {
+    /// One or more files or directories to scan. Directories are scanned recursively.
+    paths: Vec<PathBuf>,
+}
+
 fn main() -> anyhow::Result<()> {
-    let mut args: Vec<String> = env::args().skip(1).collect();
-    if args.is_empty() {
-        args = vec![String::from(".")]
-    }
+    let args = Args::parse();
 
     let default_config = get_default_config();
-    let user_config = get_user_config()?;
-    let dispatcher = RuleDispatcher {
-        user_config,
+    let mut dispatcher = RuleDispatcher {
+        user_config: None,
         default_config,
     };
 
-    for arg in args {
-        for entry in walkdir::WalkDir::new(arg) {
+    for path in args.paths {
+        dispatcher.user_config = get_user_config(&path)?;
+
+        for entry in walkdir::WalkDir::new(path) {
             match entry {
                 Err(err) => eprintln!("{:}", err),
                 Ok(entry) if entry.file_type().is_file() => check_file(&dispatcher, entry.path()),
@@ -178,8 +184,17 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
     }
 }
 
-fn get_user_config() -> anyhow::Result<Option<Config>> {
-    match std::fs::read_to_string("./unicop.toml") {
+fn get_user_config(path: &Path) -> anyhow::Result<Option<Config>> {
+    let config_dir = if path.is_file() {
+        // If scanning a file, then check for the config file in the same directory.
+        path.parent().unwrap_or(path)
+    } else {
+        // And if scanning a dir, look for the config file in the dir.
+        path
+    };
+    let config_path = config_dir.join("unicop.toml");
+
+    match std::fs::read_to_string(&config_path) {
         Ok(config_str) => toml::from_str(&config_str).context("Failed to parse config"),
         Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
         Err(e) => Err(e).context("Failed to read config file"),
