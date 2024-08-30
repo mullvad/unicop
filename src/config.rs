@@ -73,11 +73,10 @@ pub enum Language {
     Rust,
 }
 
-static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
-    "doc_comment" => CodeType::Comment,
-    "line_comment" => CodeType::Comment,
-    "string_content" => CodeType::StringLiteral,
-    "char_literal" => CodeType::StringLiteral,
+static GO_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "comment" => CodeType::Comment,
+    "interpreted_string_literal" => CodeType::StringLiteral,
+    "raw_string_literal" => CodeType::StringLiteral,
 };
 
 static JAVASCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
@@ -91,28 +90,29 @@ static PYTHON_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "comment" => CodeType::Comment,
 };
 
-static GO_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
-    "comment" => CodeType::Comment,
-    "interpreted_string_literal" => CodeType::StringLiteral,
-    "raw_string_literal" => CodeType::StringLiteral,
+static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "doc_comment" => CodeType::Comment,
+    "line_comment" => CodeType::Comment,
+    "string_content" => CodeType::StringLiteral,
+    "char_literal" => CodeType::StringLiteral,
 };
 
 impl Language {
     pub fn lookup_code_type(&self, tree_sitter_code_type: &str) -> Option<CodeType> {
         match self {
-            Language::Javascript => JAVASCRIPT_CODE_TYPES.get(tree_sitter_code_type).copied(),
-            Language::Rust => RUST_CODE_TYPES.get(tree_sitter_code_type).copied(),
-            Language::Python => PYTHON_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Go => GO_CODE_TYPES.get(tree_sitter_code_type).copied(),
+            Language::Javascript => JAVASCRIPT_CODE_TYPES.get(tree_sitter_code_type).copied(),
+            Language::Python => PYTHON_CODE_TYPES.get(tree_sitter_code_type).copied(),
+            Language::Rust => RUST_CODE_TYPES.get(tree_sitter_code_type).copied(),
         }
     }
 
     pub fn grammar(&self) -> tree_sitter::Language {
         match self {
+            Language::Go => tree_sitter_go::language(),
             Language::Javascript => tree_sitter_javascript::language(),
             Language::Python => tree_sitter_python::language(),
             Language::Rust => tree_sitter_rust::language(),
-            Language::Go => tree_sitter_go::language(),
         }
     }
 }
