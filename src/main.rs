@@ -1,10 +1,11 @@
 use std::collections::HashMap;
-use std::env;
 use std::fs;
 use std::io;
 use std::path::Path;
+use std::path::PathBuf;
 
 use anyhow::Context;
+use clap::Parser;
 use config::CodeType;
 use config::Config;
 use config::Language;
@@ -105,24 +106,33 @@ impl RuleDispatcher {
     }
 }
 
+#[derive(Debug, clap::Parser)]
+#[command(arg_required_else_help = true)]
+struct Args {
+    /// One or more files or directories to scan. Directories are scanned recursively.
+    paths: Vec<PathBuf>,
+}
+
 fn main() -> anyhow::Result<()> {
-    let mut args: Vec<String> = env::args().skip(1).collect();
-    if args.is_empty() {
-        args = vec![String::from(".")]
-    }
+    env_logger::init();
+
+    let args = Args::parse();
 
     let default_config = get_default_config();
-    let user_config = get_user_config()?;
-    let dispatcher = RuleDispatcher {
-        user_config,
+    let mut dispatcher = RuleDispatcher {
+        user_config: None,
         default_config,
     };
 
-    for arg in args {
-        for entry in walkdir::WalkDir::new(arg) {
+    for path in args.paths {
+        for entry in walkdir::WalkDir::new(path) {
             match entry {
                 Err(err) => eprintln!("{:}", err),
-                Ok(entry) if entry.file_type().is_file() => check_file(&dispatcher, entry.path()),
+                Ok(entry) if entry.file_type().is_file() => {
+                    let entry_path = entry.path();
+                    dispatcher.user_config = get_user_config(entry_path)?;
+                    check_file(&dispatcher, entry_path);
+                }
                 Ok(_) => {}
             }
         }
@@ -178,11 +188,39 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
     }
 }
 
-fn get_user_config() -> anyhow::Result<Option<Config>> {
-    match std::fs::read_to_string("./unicop.toml") {
-        Ok(config_str) => toml::from_str(&config_str).context("Failed to parse config"),
-        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(e).context("Failed to read config file"),
+fn get_user_config(path: &Path) -> anyhow::Result<Option<Config>> {
+    let absolute_path = path
+        .canonicalize()
+        .with_context(|| format!("Failed to resolve absolute path for {}", path.display()))?;
+    let mut config_dir = if absolute_path.is_file() {
+        // If scanning a file, then check for the config file in the same directory.
+        absolute_path.parent().unwrap()
+    } else {
+        // And if scanning a dir, look for the config file in the dir.
+        &absolute_path
+    };
+
+    loop {
+        let config_path = config_dir.join("unicop.toml");
+
+        match std::fs::read_to_string(&config_path) {
+            Ok(config_str) => {
+                log::debug!(
+                    "Using config {} for scan path {}",
+                    config_path.display(),
+                    absolute_path.display()
+                );
+                break toml::from_str(&config_str).context("Failed to parse config");
+            }
+            Err(e) if e.kind() == io::ErrorKind::NotFound => match config_dir.parent() {
+                Some(parent_dir) => config_dir = parent_dir,
+                None => {
+                    log::debug!("No user config for scan path {}", absolute_path.display());
+                    break Ok(None);
+                }
+            },
+            Err(e) => break Err(e).context("Failed to read config file"),
+        }
     }
 }
 

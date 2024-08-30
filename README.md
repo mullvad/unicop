@@ -6,7 +6,7 @@
 unicop [FILES]...
 ```
 
-Where `[FILES]...` is a list of files or directory to check, default: `.`.
+Where `[FILES]...` is a list of files or directory to check.
 
 ## Example
 
