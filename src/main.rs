@@ -187,19 +187,38 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
 }
 
 fn get_user_config(path: &Path) -> anyhow::Result<Option<Config>> {
-    let config_dir = if path.is_file() {
+    let absolute_path = path
+        .canonicalize()
+        .with_context(|| format!("Failed to resolve absolute path for {}", path.display()))?;
+    let mut config_dir = if absolute_path.is_file() {
         // If scanning a file, then check for the config file in the same directory.
-        path.parent().unwrap_or(path)
+        absolute_path.parent().unwrap()
     } else {
         // And if scanning a dir, look for the config file in the dir.
-        path
+        &absolute_path
     };
-    let config_path = config_dir.join("unicop.toml");
 
-    match std::fs::read_to_string(&config_path) {
-        Ok(config_str) => toml::from_str(&config_str).context("Failed to parse config"),
-        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(e).context("Failed to read config file"),
+    loop {
+        let config_path = config_dir.join("unicop.toml");
+
+        match std::fs::read_to_string(&config_path) {
+            Ok(config_str) => {
+                log::debug!(
+                    "Using config {} for scan path {}",
+                    config_path.display(),
+                    absolute_path.display()
+                );
+                break toml::from_str(&config_str).context("Failed to parse config");
+            }
+            Err(e) if e.kind() == io::ErrorKind::NotFound => match config_dir.parent() {
+                Some(parent_dir) => config_dir = parent_dir,
+                None => {
+                    log::debug!("No user config for scan path {}", absolute_path.display());
+                    break Ok(None);
+                }
+            },
+            Err(e) => break Err(e).context("Failed to read config file"),
+        }
     }
 }
 
