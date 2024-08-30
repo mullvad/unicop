@@ -125,12 +125,14 @@ fn main() -> anyhow::Result<()> {
     };
 
     for path in args.paths {
-        dispatcher.user_config = get_user_config(&path)?;
-
         for entry in walkdir::WalkDir::new(path) {
             match entry {
                 Err(err) => eprintln!("{:}", err),
-                Ok(entry) if entry.file_type().is_file() => check_file(&dispatcher, entry.path()),
+                Ok(entry) if entry.file_type().is_file() => {
+                    let entry_path = entry.path();
+                    dispatcher.user_config = get_user_config(entry_path)?;
+                    check_file(&dispatcher, entry_path);
+                }
                 Ok(_) => {}
             }
         }
