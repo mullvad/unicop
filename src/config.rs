@@ -35,15 +35,13 @@ impl FromStr for CharacterType {
         if s == "*" {
             return Ok(Self::Anything);
         }
-        for block in unic_ucd_block::BlockIter::new() {
-            if block.name == s {
-                return Ok(Self::Block(block));
-            }
+        if let Some(range) = crate::unicode_blocks::UNICODE_BLOCKS.get(s) {
+            return Ok(Self::Block(range));
         }
         if let Some((low, high)) = s.split_once("..") {
             let low = unicode_notation_to_char(low)?;
             let high = unicode_notation_to_char(high)?;
-            return Ok(Self::Range(unic_char_range::CharRange { low, high }));
+            return Ok(Self::Range(low..=high));
         }
         unicode_notation_to_char(s).map(Self::CodePoint)
     }
@@ -158,9 +156,6 @@ pub struct Config {
 
 #[cfg(test)]
 mod tests {
-    use unic_char_range::CharRange;
-    use unic_ucd_block::BlockIter;
-
     use super::*;
     use crate::rules::*;
 
@@ -212,8 +207,6 @@ deny = ["Tibetan"]
         )
         .unwrap();
 
-        let tibetan_block = BlockIter::new().find(|b| b.name == "Tibetan").unwrap();
-
         let expected_config = Config {
             global: ConfigRules {
                 default: RuleSet {
@@ -235,19 +228,16 @@ deny = ["Tibetan"]
                     rules: ConfigRules {
                         default: RuleSet {
                             allow: vec![
-                                CharacterType::Block(tibetan_block),
+                                CharacterType::Block(&crate::unicode_blocks::TIBETAN),
                                 CharacterType::CodePoint('\u{9000}'),
                             ],
-                            deny: vec![CharacterType::Range(CharRange {
-                                low: '\u{5000}',
-                                high: '\u{5004}',
-                            })],
+                            deny: vec![CharacterType::Range('\u{5000}'..='\u{5004}')],
                         },
                         code_type_rules: HashMap::from([(
                             CodeType::StringLiteral,
                             RuleSet {
                                 allow: vec![],
-                                deny: vec![CharacterType::Block(tibetan_block)],
+                                deny: vec![CharacterType::Block(&crate::unicode_blocks::TIBETAN)],
                             },
                         )]),
                     },

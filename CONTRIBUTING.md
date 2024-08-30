@@ -15,3 +15,7 @@ issues are raised.
 
 Please follow the guidelines at https://cbea.ms/git-commit/ for git commit message style. There is a CI
 job that will enforce this.
+
+## Updating unicode blocks
+
+Use the `generate-unicode-blocks-consts` script to update character blocks constants from Unicode Consortium data:
