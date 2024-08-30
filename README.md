@@ -43,19 +43,16 @@ $ unicop example-files/homoglyph.js example-files/invisible.js
 
 ```
 
-## Contributing to unicop
+## Configuring unicop
 
-Please see the [contribution](CONTRIBUTING.md) documentation for details on how to understand, build and test
-this program, as well as submitting changes.
+When scanning a file, unicop will look for a `unicop.toml` config file in the same directory as the file being scanned. If one does not exist it check in the parent directory. It keeps looking up the directory tree until finding a config file or reaching the filesystem root. If no config file is found, the unicop defaults are used.
 
-## Todo
+### Defaults
 
-Things left to implement to make this usable
+The default configuration is to allow all unicode code points except bidirectional (bidi) characters in
+comments and in string literals. In all other places only ASCII characters are allowed.
 
-* Recursively scan a directory. Check all files matching some criteria (extension matching compatible parsers?)
-* Add language detection machinery (mapping from file extension to tree-sitter parser)
-* Some way to specify an allowlist and denylist of unicode code points per language parser. This should have
-  sane defaults: Comments and string literals allow all unicode except Bidi characters, all other kinds of code deny all unicode.
+### Example configuration
 
 ```toml
 [global]
@@ -85,17 +82,23 @@ string-literal = {
   allow = ["u+1234"],
   deny = ["bidi"],
 }
-identifiers = {
-  deny = ["u+90"]
-}
 
 [language.javascript]
+# Override the default path glob, only scan .js files
 paths = ["**/*.js"]
+# Allow everything except bidi characters everywhere.
 default = {
-  allow = ["unicode"],
+  allow = ["*"],
   deny = ["bidi"],
 }
 
+# For python, override what files to scan, but keep the default allow/deny rules
 [language.python]
 paths = ["./build", "run-tests", "*.py"]
 ```
+
+
+## Contributing to unicop
+
+Please see the [contribution](CONTRIBUTING.md) documentation for details on how to understand, build and test
+this program, as well as submitting changes.

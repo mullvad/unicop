@@ -226,6 +226,8 @@ fn get_user_config(path: &Path) -> anyhow::Result<Option<Config>> {
 
 /// Comments and string literals allow all unicode except Bidi characters,
 /// all other kinds of code deny all unicode.
+///
+/// Keep this in sync with the description of default config in the main README.md.
 fn get_default_config() -> Config {
     Config {
         global: config::ConfigRules {
