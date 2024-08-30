@@ -71,6 +71,7 @@ pub enum Language {
     Javascript,
     Python,
     Rust,
+    Swift,
 }
 
 static GO_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
@@ -97,6 +98,13 @@ static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "char_literal" => CodeType::StringLiteral,
 };
 
+static SWIFT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "comment" => CodeType::Comment,
+    "multiline_comment" => CodeType::Comment,
+    "line_str_text" => CodeType::StringLiteral,
+    "multi_line_str_text" => CodeType::StringLiteral,
+};
+
 impl Language {
     pub fn lookup_code_type(&self, tree_sitter_code_type: &str) -> Option<CodeType> {
         match self {
@@ -104,6 +112,7 @@ impl Language {
             Language::Javascript => JAVASCRIPT_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Python => PYTHON_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Rust => RUST_CODE_TYPES.get(tree_sitter_code_type).copied(),
+            Language::Swift => SWIFT_CODE_TYPES.get(tree_sitter_code_type).copied(),
         }
     }
 
@@ -113,6 +122,7 @@ impl Language {
             Language::Javascript => tree_sitter_javascript::language(),
             Language::Python => tree_sitter_python::language(),
             Language::Rust => tree_sitter_rust::language(),
+            Language::Swift => tree_sitter_swift::language(),
         }
     }
 }

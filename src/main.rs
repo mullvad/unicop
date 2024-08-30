@@ -286,6 +286,13 @@ fn get_default_config() -> Config {
                     rules: Default::default(),
                 },
             ),
+            (
+                Language::Swift,
+                config::LanguageRules {
+                    paths: Some(vec![glob::Pattern::new("**/*.swift").unwrap()]),
+                    rules: Default::default(),
+                },
+            ),
         ]),
     }
 }
