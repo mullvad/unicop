@@ -43,6 +43,11 @@ $ unicop example-files/homoglyph.js example-files/invisible.js
 
 ```
 
+## Contributing to unicop
+
+Please see the [contribution](CONTRIBUTING.md) documentation for details on how to understand, build and test
+this program, as well as submitting changes.
+
 ## Todo
 
 Things left to implement to make this usable
