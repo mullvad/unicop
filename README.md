@@ -11,9 +11,9 @@ Where `[FILES]...` is a list of files or directory to check, default: `.`.
 ## Example
 
 ```console
-$ unicop examples/homoglyph.js examples/invisible.js
+$ unicop example-files/homoglyph.js example-files/invisible.js
   × found non-ascii character LATIN LETTER RETROFLEX CLICK in identifier
-   ╭─[examples/homoglyph.js:4:18]
+   ╭─[example-files/homoglyph.js:4:18]
  3 │ function isUserAdmin(user) {
  4 │    if(environmentǃ=ENV_PROD){
    ·                  ┬
@@ -23,7 +23,7 @@ $ unicop examples/homoglyph.js examples/invisible.js
 
   × found non-ascii character HANGUL JUNGSEONG FILLER in
   │ shorthand_property_identifier_pattern
-   ╭─[examples/invisible.js:2:20]
+   ╭─[example-files/invisible.js:2:20]
  1 │ app.get('/network_health', async (req, res) => {
  2 │    const { timeout,ᅠ} = req.query;
    ·                    ┬
@@ -32,7 +32,7 @@ $ unicop examples/homoglyph.js examples/invisible.js
    ╰────
 
   × found non-ascii character HANGUL JUNGSEONG FILLER in identifier
-   ╭─[examples/invisible.js:5:38]
+   ╭─[example-files/invisible.js:5:38]
  4 │        'ping -c 1 google.com',
  5 │        'curl -s http://example.com/',ᅠ
    ·                                      ┬
