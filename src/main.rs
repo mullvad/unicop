@@ -15,6 +15,7 @@ use rules::RuleSet;
 use unic_ucd_name::Name;
 
 mod config;
+mod languages;
 mod rules;
 mod unicode_blocks;
 
@@ -288,6 +289,13 @@ fn get_default_config() -> Config {
             .collect(),
         },
         language: HashMap::from([
+            (
+                Language::Swift,
+                config::LanguageRules {
+                    paths: Some(vec![glob::Pattern::new("**/*.swift").unwrap()]),
+                    rules: Default::default(),
+                },
+            ),
             (
                 Language::Rust,
                 config::LanguageRules {
