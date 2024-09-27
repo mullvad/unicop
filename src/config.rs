@@ -61,7 +61,6 @@ fn unicode_notation_to_char(unicode_notation: &str) -> Result<char, InvalidChara
 pub enum CodeType {
     Comment,
     StringLiteral,
-    Identifiers,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
