@@ -160,9 +160,6 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
         );
     }
     for (off, ch) in src.char_indices() {
-        if ch.is_ascii() {
-            continue;
-        }
         let node = tree
             .root_node()
             .named_descendant_for_byte_range(off, off + ch.len_utf8())
