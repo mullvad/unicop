@@ -46,7 +46,7 @@ impl RuleSet {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CharacterType {
     /// Single character (eg. "U+9000")
     CodePoint(char),

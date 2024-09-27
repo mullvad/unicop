@@ -1,22 +1,21 @@
 use std::collections::HashMap;
 use std::fs;
 use std::io;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use clap::Parser;
-use config::CodeType;
-use config::Config;
-use config::Language;
 use miette::{miette, LabeledSpan, NamedSource, Severity};
-use rules::Decision;
-use rules::RuleSet;
 use unic_ucd_name::Name;
+
+use crate::config::{CodeType, Config, Language};
+use crate::rules::{CharacterType, Decision, RuleSet};
+use crate::unicode_notation::char_to_unicode_notation;
 
 mod config;
 mod rules;
 mod unicode_blocks;
+mod unicode_notation;
 
 // Replaces the previous idea of "RuleChain"s.
 struct RuleDispatcher {
@@ -113,9 +112,22 @@ struct Args {
     paths: Vec<PathBuf>,
 
     /// Print the names of all the Unicode blocks that this tool recognizes, then exits.
+    ///
     /// Enable verbose output to also print the code point ranges for each block.
     #[arg(long)]
     print_unicode_blocks: bool,
+
+    /// Print the character(s) in the given character type, then exits.
+    ///
+    /// As argument you can specify anything you can add to the allow end deny lists in the
+    /// config file. For example:
+    ///
+    /// `--print-characters "Mathematical Operators"` will print all unicode code points
+    /// in that block.
+    ///
+    /// `--print-characters U+100..U+1ff` will print all characters between 100 and 1ff (hex)
+    #[arg(long)]
+    print_characters: Option<CharacterType>,
 
     /// Enable more verbose output.
     #[arg(short, long)]
@@ -131,11 +143,24 @@ fn main() -> anyhow::Result<()> {
         for (&name, range) in &unicode_blocks::UNICODE_BLOCKS {
             print!("{name}");
             if args.verbose {
-                let range_start = u32::from(*range.start());
-                let range_end = u32::from(*range.end());
-                print!(": U+{range_start}..U+{range_end}");
+                let range_start = char_to_unicode_notation(*range.start());
+                let range_end = char_to_unicode_notation(*range.end());
+                print!(": {range_start}..{range_end}");
             }
             println!();
+        }
+        return Ok(());
+    }
+
+    if let Some(character_type) = args.print_characters {
+        match character_type {
+            CharacterType::CodePoint(c) => print_char_range(c..=c),
+            CharacterType::Range(range) => print_char_range(range),
+            CharacterType::Bidi => print_char_range(rules::BIDI_CHARACTERS.iter().copied()),
+            CharacterType::Block(block) => print_char_range(block.clone()),
+            // TODO: `char::MIN` and `char::MAX` are heading for stabilization. When they are
+            // stable we can replace these constants for those in std.
+            CharacterType::Anything => print_char_range('\0'..='\u{10ffff}'),
         }
         return Ok(());
     }
@@ -329,5 +354,19 @@ fn get_default_config() -> Config {
                 },
             ),
         ]),
+    }
+}
+
+/// Prints to stdout, one line per character in the iterator.
+/// The format is to first print the unicode notation followed
+/// by the actual character glyph followed by the name if we know of a name.
+fn print_char_range(range: impl Iterator<Item = char>) {
+    for c in range {
+        let code_point = char_to_unicode_notation(c);
+        let char_name = match Name::of(c) {
+            Some(name) => format!(" ({name})"),
+            None => "".to_owned(),
+        };
+        println!("{code_point}: '{c}'{char_name}");
     }
 }
