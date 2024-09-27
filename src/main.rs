@@ -353,6 +353,13 @@ fn get_default_config() -> Config {
                     rules: Default::default(),
                 },
             ),
+            (
+                Language::Typescript,
+                config::LanguageRules {
+                    paths: Some(vec![glob::Pattern::new("**/*.ts").unwrap()]),
+                    rules: Default::default(),
+                },
+            ),
         ]),
     }
 }
