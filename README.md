@@ -1,14 +1,47 @@
 # Unicop
 
+Unicop is a tool that scans source code and detects unwanted unicode code points.
+This is used to stop attacks such as [Trojan Source] and attacks where invisible characters
+and homoglyphs smuggle backdoors into the program. Here are some examples of articles
+on the topic:
+
+* [PortSwigger](https://portswigger.net/daily-swig/smuggling-hidden-backdoors-into-javascript-with-homoglyphs-and-invisible-unicode-characters)
+* [Bleeping Computer](https://www.bleepingcomputer.com/news/security/invisible-characters-could-be-hiding-backdoors-in-your-javascript-code/)
+* [Certitude](https://certitude.consulting/blog/en/invisible-backdoor/)
+
+## Background and motivation
+
+This tool was written because before it, the only two options to handle the above issues were to:
+1. Not care. or,
+2. Only allow ascii in all your source code.
+
+But this is a bit limiting. The above attack vectors should be taken serious, but there many
+legitimate use cases for non-ASCII unicode code points in source code. Some common uses
+of non-ASCII unicode in source code:
+* Use math symbols and other special symbols in comments to explain how the code works.
+* Use various languages in comments and tests for code that deal with localization.
+* Write comments in non-English for software developed by people who don't have English
+  as their native language.
+* Use other languages than English in string literals, for software that target non-English
+  speaking users.
+* Use emojis, math symbols, box drawing symbols etc in string literals for software that
+  want to output these symbols for some reason. For example to draw a fancy terminal UI.
+
+[Trojan Source]: https://en.wikipedia.org/wiki/Trojan_Source
+
 ## Usage
 
+The intended use case is to run this tool in the same places as where you would run automatic
+code analysis, CVE scanners and similar. Probably in your CI pipeline. But of course also
+locally.
+
 ```sh,ignore
-unicop [FILES]...
+unicop [PATHS]...
 ```
 
-Where `[FILES]...` is a list of files or directory to check.
+Where `[PATHS]...` is a list of files or directory to check.
 
-## Example
+### Example usage
 
 ```console
 $ unicop example-files/homoglyph.js example-files/invisible.js
@@ -40,59 +73,54 @@ $ unicop example-files/homoglyph.js example-files/invisible.js
 
 ```
 
+## Configuration
+
+By default, the tool allows anything, except [bidirectional control characters] in comments and
+string literals. In all other code, only ASCII characters are allowed.
+
+You can configure this behavior in a `unicop.toml` file. `unicop` will use the first `unicop.toml`
+file it can find, starting in the same directory as the file that is being scanned,
+and then traversing up to the parent directory.
+
+[bidirectional control characters]: https://en.wikipedia.org/wiki/Unicode_control_characters#Bidirectional_text_control
+
+### Example config
+
+Here is an example config file. Maybe not a sane default for most projects. This is mostly
+just showcasing what you can configure.
+
+```toml
+# Define global rules that apply as a fallback when there are no language specific rules
+# or those language specific rules don't make a decision about a code point.
+[global]
+# In general, only allow ascii, denying all non-ascii code points by default.
+default = { allow = ["ascii"] }
+# Be a bit more forgiving in comments and string literals. But still deny bidirectional
+# modifiers, to avoid attacks where code is made to look like it is inside a comment or string,
+# but it actually is not.
+comment = { allow = ["*"], deny = ["bidi"] }
+string-literal = { allow = ["*"], deny = ["bidi"] }
+
+
+[language.rust]
+# In Rust comments, allow ascii, unicode currency symbols and the thumbs up emoji,
+# nothing else. This means Rust comments allow less stuff than comments in other
+# languages, in this config.
+comment = { allow = ["ascii", "Currency Symbols", "U+1F44D"], deny = ["*"]}
+
+# For everything not comments, Rust falls back to the `global` settings above.
+
+
+[language.python]
+# Custom paths for python. Look at all *.py-files, but also look at 'build' and 'run-tests'
+# in the root path
+paths = ["**/*.py", "./build", "run-tests"]
+
+# Since there are no special rules for python defined here, evaluation falls back
+# to the rules in `global` above.
+```
+
 ## Contributing to unicop
 
 Please see the [contribution](CONTRIBUTING.md) documentation for details on how to understand, build and test
 this program, as well as submitting changes.
-
-## Todo
-
-Things left to implement to make this usable
-
-* Recursively scan a directory. Check all files matching some criteria (extension matching compatible parsers?)
-* Add language detection machinery (mapping from file extension to tree-sitter parser)
-* Some way to specify an allowlist and denylist of unicode code points per language parser. This should have
-  sane defaults: Comments and string literals allow all unicode except Bidi characters, all other kinds of code deny all unicode.
-
-```toml
-[global]
-default = {
-  allow = ["ascii"]
-}
-comment = {
-  allow = ["*"]
-  deny = ["bidi"]
-}
-string-literal = {
-  allow = ["*"]
-  deny = ["bidi"]
-}
-
-[language.rust]
-default = {
-  allow = ["emoji"]
-  deny = []
-}
-
-comment = {
-  allow = ["u+1234"],
-  deny = ["bidi"],
-}
-string-literal = {
-  allow = ["u+1234"],
-  deny = ["bidi"],
-}
-identifiers = {
-  deny = ["u+90"]
-}
-
-[language.javascript]
-paths = ["**/*.js"]
-default = {
-  allow = ["unicode"],
-  deny = ["bidi"],
-}
-
-[language.python]
-paths = ["./build", "run-tests", "*.py"]
-```
