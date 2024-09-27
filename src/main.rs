@@ -111,12 +111,34 @@ impl RuleDispatcher {
 struct Args {
     /// One or more files or directories to scan. Directories are scanned recursively.
     paths: Vec<PathBuf>,
+
+    /// Print the names of all the Unicode blocks that this tool recognizes, then exits.
+    /// Enable verbose output to also print the code point ranges for each block.
+    #[arg(long)]
+    print_unicode_blocks: bool,
+
+    /// Enable more verbose output.
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let args = Args::parse();
+
+    if args.print_unicode_blocks {
+        for (&name, range) in &unicode_blocks::UNICODE_BLOCKS {
+            print!("{name}");
+            if args.verbose {
+                let range_start = u32::from(*range.start());
+                let range_end = u32::from(*range.end());
+                print!(": U+{range_start}..U+{range_end}");
+            }
+            println!();
+        }
+        return Ok(());
+    }
 
     let default_config = get_default_config();
     let mut dispatcher = RuleDispatcher {
