@@ -56,10 +56,19 @@ fn unicode_notation_to_char(unicode_notation: &str) -> Result<char, InvalidChara
     parse(unicode_notation).ok_or_else(|| InvalidCharacterType(unicode_notation.to_owned()))
 }
 
+/// All types of code that can have special rules about what is allowed or denied.
+///
+/// All source code not falling into one of these categories will be evaluated
+/// by the `default` rules directly.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum CodeType {
+    /// Code comments. This includes all types of comments. This includes line comments,
+    /// block comments, etc. Depending on the language.
     Comment,
+
+    /// String and character literals. Such as "hello", 'c' and similar, depending on
+    /// the language.
     StringLiteral,
 }
 
