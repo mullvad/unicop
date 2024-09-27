@@ -94,6 +94,7 @@ static PYTHON_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
 static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "doc_comment" => CodeType::Comment,
     "line_comment" => CodeType::Comment,
+    "block_comment" => CodeType::Comment,
     "string_content" => CodeType::StringLiteral,
     "char_literal" => CodeType::StringLiteral,
 };
