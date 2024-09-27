@@ -12,7 +12,7 @@ Where `[FILES]...` is a list of files or directory to check.
 
 ```console
 $ unicop example-files/homoglyph.js example-files/invisible.js
-  × found non-ascii character LATIN LETTER RETROFLEX CLICK in identifier
+  × found disallowed character LATIN LETTER RETROFLEX CLICK in identifier
    ╭─[example-files/homoglyph.js:4:18]
  3 │ function isUserAdmin(user) {
  4 │    if(environmentǃ=ENV_PROD){
@@ -20,8 +20,7 @@ $ unicop example-files/homoglyph.js example-files/invisible.js
    ·                  ╰── LATIN LETTER RETROFLEX CLICK
  5 │        // bypass authZ checks in DEV
    ╰────
-
-  × found non-ascii character HANGUL JUNGSEONG FILLER in
+  × found disallowed character HANGUL JUNGSEONG FILLER in
   │ shorthand_property_identifier_pattern
    ╭─[example-files/invisible.js:2:20]
  1 │ app.get('/network_health', async (req, res) => {
@@ -30,8 +29,7 @@ $ unicop example-files/homoglyph.js example-files/invisible.js
    ·                    ╰── HANGUL JUNGSEONG FILLER
  3 │    const checkCommands = [
    ╰────
-
-  × found non-ascii character HANGUL JUNGSEONG FILLER in identifier
+  × found disallowed character HANGUL JUNGSEONG FILLER in identifier
    ╭─[example-files/invisible.js:5:38]
  4 │        'ping -c 1 google.com',
  5 │        'curl -s http://example.com/',ᅠ
@@ -39,7 +37,6 @@ $ unicop example-files/homoglyph.js example-files/invisible.js
    ·                                      ╰── HANGUL JUNGSEONG FILLER
  6 │    ];
    ╰────
-
 
 ```
 

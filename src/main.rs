@@ -153,11 +153,27 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
         .expect("Error loading grammar");
     let tree = parser.parse(&src, None).unwrap();
     if tree.root_node().has_error() {
-        println!(
-            "{:?}",
-            miette!(severity = Severity::Warning, "{}: parse error", filename)
-                .with_source_code(named_source.clone())
-        );
+        let mut labels = Vec::new();
+        if log::log_enabled!(log::Level::Debug) {
+            let query = tree_sitter::Query::new(&lang.grammar(), "(ERROR) @error").unwrap();
+            let mut cursor = tree_sitter::QueryCursor::new();
+            for (r#match, _) in cursor.captures(&query, tree.root_node(), src.as_bytes()) {
+                for capture in r#match.captures {
+                    labels.push(LabeledSpan::at(
+                        capture.node.start_byte()..capture.node.end_byte(),
+                        "Error",
+                    ));
+                }
+            }
+        }
+        let report = miette!(
+            severity = Severity::Warning,
+            labels = labels,
+            "{}: parse error, results might be incorrect",
+            filename
+        )
+        .with_source_code(named_source.clone());
+        print!("{:?}", report);
     }
     for (off, ch) in src.char_indices() {
         let node = tree
@@ -176,12 +192,12 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
                 off..off + ch.len_utf8(),
                 chname.to_string()
             )],
-            "found non-ascii character {} in {}",
+            "found disallowed character {} in {}",
             chname,
             node.kind()
         )
         .with_source_code(named_source.clone());
-        println!("{:?}", report);
+        print!("{:?}", report);
     }
 }
 
