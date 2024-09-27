@@ -75,15 +75,15 @@ default = {
 }
 
 comment = {
-  allow = ["u+1234"],
+  allow = ["U+1234"],
   deny = ["bidi"],
 }
 string-literal = {
-  allow = ["u+1234"],
+  allow = ["U+1234"],
   deny = ["bidi"],
 }
 identifiers = {
-  deny = ["u+90"]
+  deny = ["U+90"]
 }
 
 [language.javascript]
