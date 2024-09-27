@@ -56,12 +56,20 @@ fn unicode_notation_to_char(unicode_notation: &str) -> Result<char, InvalidChara
     parse(unicode_notation).ok_or_else(|| InvalidCharacterType(unicode_notation.to_owned()))
 }
 
+/// All types of code that can have special rules about what is allowed or denied.
+///
+/// All source code not falling into one of these categories will be evaluated
+/// by the `default` rules directly.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum CodeType {
+    /// Code comments. This includes all types of comments. This includes line comments,
+    /// block comments, etc. Depending on the language.
     Comment,
+
+    /// String and character literals. Such as "hello", 'c' and similar, depending on
+    /// the language.
     StringLiteral,
-    Identifiers,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
@@ -76,6 +84,7 @@ pub enum Language {
 
 static GO_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "comment" => CodeType::Comment,
+
     "interpreted_string_literal" => CodeType::StringLiteral,
     "raw_string_literal" => CodeType::StringLiteral,
 };
@@ -83,17 +92,21 @@ static GO_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
 static JAVASCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "comment" => CodeType::Comment,
     "block_comment" => CodeType::Comment,
+
     "string_fragment" => CodeType::StringLiteral,
 };
 
 static PYTHON_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
-    "string_content" => CodeType::StringLiteral,
     "comment" => CodeType::Comment,
+
+    "string_content" => CodeType::StringLiteral,
 };
 
 static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "doc_comment" => CodeType::Comment,
     "line_comment" => CodeType::Comment,
+    "block_comment" => CodeType::Comment,
+
     "string_content" => CodeType::StringLiteral,
     "char_literal" => CodeType::StringLiteral,
 };
@@ -101,6 +114,7 @@ static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
 static SWIFT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "comment" => CodeType::Comment,
     "multiline_comment" => CodeType::Comment,
+
     "line_str_text" => CodeType::StringLiteral,
     "multi_line_str_text" => CodeType::StringLiteral,
 };
