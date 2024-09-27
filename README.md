@@ -55,44 +55,32 @@ Things left to implement to make this usable
   sane defaults: Comments and string literals allow all unicode except Bidi characters, all other kinds of code deny all unicode.
 
 ```toml
+# Define global rules that apply as a fallback when there are no language specific rules
+# or those language specific rules don't make a decision about a code point.
 [global]
-default = {
-  allow = ["ascii"]
-}
-comment = {
-  allow = ["*"]
-  deny = ["bidi"]
-}
-string-literal = {
-  allow = ["*"]
-  deny = ["bidi"]
-}
+# In general, only allow ascii, denying all non-ascii code points by default.
+default = { allow = ["ascii"] }
+# Be a bit more forgiving in comments and string literals. But still deny bidirectional
+# modifiers, to avoid attacks where code is made to look like it is inside a comment or string,
+# but it actually is not.
+comment = { allow = ["*"], deny = ["bidi"] }
+string-literal = { allow = ["*"], deny = ["bidi"] }
+
 
 [language.rust]
-default = {
-  allow = ["emoji"]
-  deny = []
-}
+# In Rust comments, allow ascii, unicode currency symbols and the thumbs up emoji,
+# nothing else. This means Rust comments allow less stuff than comments in other
+# languages, in this config.
+comment = { allow = ["ascii", "Currency Symbols", "U+1F44D"], deny = ["*"]}
 
-comment = {
-  allow = ["U+1234"],
-  deny = ["bidi"],
-}
-string-literal = {
-  allow = ["U+1234"],
-  deny = ["bidi"],
-}
-identifiers = {
-  deny = ["U+90"]
-}
+# For everything not comments, Rust falls back to the `global` settings above.
 
-[language.javascript]
-paths = ["**/*.js"]
-default = {
-  allow = ["unicode"],
-  deny = ["bidi"],
-}
 
 [language.python]
-paths = ["./build", "run-tests", "*.py"]
+# Custom paths for python. Look at all *.py-files, but also look at 'build' and 'run-tests'
+# in the root path
+paths = ["**/*.py", "./build", "run-tests"]
+
+# Since there are no special rules for python defined here, evaluation falls back
+# to the rules in `global` above.
 ```
