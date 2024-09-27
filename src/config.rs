@@ -76,6 +76,7 @@ pub enum Language {
 
 static GO_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "comment" => CodeType::Comment,
+
     "interpreted_string_literal" => CodeType::StringLiteral,
     "raw_string_literal" => CodeType::StringLiteral,
 };
@@ -83,18 +84,21 @@ static GO_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
 static JAVASCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "comment" => CodeType::Comment,
     "block_comment" => CodeType::Comment,
+
     "string_fragment" => CodeType::StringLiteral,
 };
 
 static PYTHON_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
-    "string_content" => CodeType::StringLiteral,
     "comment" => CodeType::Comment,
+
+    "string_content" => CodeType::StringLiteral,
 };
 
 static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "doc_comment" => CodeType::Comment,
     "line_comment" => CodeType::Comment,
     "block_comment" => CodeType::Comment,
+
     "string_content" => CodeType::StringLiteral,
     "char_literal" => CodeType::StringLiteral,
 };
@@ -102,6 +106,7 @@ static RUST_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
 static SWIFT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "comment" => CodeType::Comment,
     "multiline_comment" => CodeType::Comment,
+
     "line_str_text" => CodeType::StringLiteral,
     "multi_line_str_text" => CodeType::StringLiteral,
 };
