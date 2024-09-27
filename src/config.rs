@@ -132,11 +132,11 @@ impl Language {
 
     pub fn grammar(&self) -> tree_sitter::Language {
         match self {
-            Language::Go => tree_sitter_go::language(),
-            Language::Javascript => tree_sitter_javascript::language(),
-            Language::Python => tree_sitter_python::language(),
-            Language::Rust => tree_sitter_rust::language(),
-            Language::Swift => tree_sitter_swift::language(),
+            Language::Go => tree_sitter_go::LANGUAGE.into(),
+            Language::Javascript => tree_sitter_javascript::LANGUAGE.into(),
+            Language::Python => tree_sitter_python::LANGUAGE.into(),
+            Language::Rust => tree_sitter_rust::LANGUAGE.into(),
+            Language::Swift => tree_sitter_swift::LANGUAGE.into(),
         }
     }
 }
