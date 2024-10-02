@@ -88,6 +88,7 @@ static GO_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
 
     "interpreted_string_literal" => CodeType::StringLiteral,
     "raw_string_literal" => CodeType::StringLiteral,
+    "rune_literal" => CodeType::StringLiteral,
 };
 
 static JAVASCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
