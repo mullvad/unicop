@@ -1,0 +1,33 @@
+# Run test on example files
+
+# Go
+
+```
+$ unicop example-files/examples.go
+IO error for operation on example-files/examples.go: No such file or directory (os error 2)
+
+```
+
+
+# Typescript
+
+```
+$ unicop example-files/examples.ts
+  × found disallowed character LATIN LETTER RETROFLEX CLICK in identifier
+    ╭─[example-files/examples.ts:11:16]
+ 10 │ // Homoglyph
+ 11 │ if (environmentǃ=ENV_PROD) {}
+    ·                ┬
+    ·                ╰── LATIN LETTER RETROFLEX CLICK
+ 12 │ 
+    ╰────
+  × found disallowed character HANGUL JUNGSEONG FILLER in
+  │ shorthand_property_identifier_pattern
+    ╭─[example-files/examples.ts:14:17]
+ 13 │ // Invisible
+ 14 │ const { timeout,ᅠ} = req.query;
+    ·                 ┬
+    ·                 ╰── HANGUL JUNGSEONG FILLER
+    ╰────
+
+```
