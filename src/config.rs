@@ -52,12 +52,8 @@ impl FromStr for CharacterType {
 }
 
 fn unicode_notation_to_char(unicode_notation: &str) -> Result<char, InvalidCharacterType> {
-    let parse = |unicode_notation: &str| -> Option<char> {
-        let hex_str_number = unicode_notation.strip_prefix("U+")?;
-        let int_number = u32::from_str_radix(hex_str_number, 16).ok()?;
-        char::from_u32(int_number)
-    };
-    parse(unicode_notation).ok_or_else(|| InvalidCharacterType(unicode_notation.to_owned()))
+    crate::unicode_notation::unicode_notation_to_char(unicode_notation)
+        .ok_or_else(|| InvalidCharacterType(unicode_notation.to_owned()))
 }
 
 /// All types of code that can have special rules about what is allowed or denied.

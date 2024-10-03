@@ -1,6 +1,6 @@
 /// List of bidirectional formatting characters from <https://en.wikipedia.org/wiki/Trojan_Source>
-const BIDI_CHARACTERS: &[char] = &[
-    '\u{202A}', '\u{202b}', '\u{202c}', '\u{202d}', '\u{202e}', '\u{2066}', '\u{2067}', '\u{2068}',
+pub const BIDI_CHARACTERS: &[char] = &[
+    '\u{202A}', '\u{202B}', '\u{202C}', '\u{202D}', '\u{202E}', '\u{2066}', '\u{2067}', '\u{2068}',
     '\u{2069}',
 ];
 
@@ -46,7 +46,7 @@ impl RuleSet {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CharacterType {
     /// Single character (eg. "U+9000")
     CodePoint(char),
