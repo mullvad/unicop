@@ -29,6 +29,10 @@ impl FromStr for CharacterType {
     type Err = InvalidCharacterType;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // Shorthand to the ascii unicode block
+        if s == "ascii" {
+            return Ok(Self::Block(&crate::unicode_blocks::BASIC_LATIN));
+        }
         if s == "bidi" {
             return Ok(Self::Bidi);
         }
