@@ -158,9 +158,7 @@ fn main() -> anyhow::Result<()> {
             CharacterType::Range(range) => print_char_range(range),
             CharacterType::Bidi => print_char_range(rules::BIDI_CHARACTERS.iter().copied()),
             CharacterType::Block(block) => print_char_range(block.clone()),
-            // TODO: `char::MIN` and `char::MAX` are heading for stabilization. When they are
-            // stable we can replace these constants for those in std.
-            CharacterType::Anything => print_char_range('\0'..='\u{10ffff}'),
+            CharacterType::Anything => print_char_range(char::MIN..=char::MAX),
         }
         return Ok(());
     }
