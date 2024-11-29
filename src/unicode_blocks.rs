@@ -328,7 +328,7 @@ pub const SUPPLEMENTARY_PRIVATE_USE_AREA_A: std::ops::RangeInclusive<char> = '\u
 pub const SUPPLEMENTARY_PRIVATE_USE_AREA_B: std::ops::RangeInclusive<char> = '\u{100000}'..='\u{10FFFF}';
 
 /// UNICODE_BLOCKS is a mapping from the pretty block name to the character range.
-pub static UNICODE_BLOCKS: phf::Map<&'static str, std::ops::RangeInclusive<char>> = phf::phf_map! {
+pub static UNICODE_BLOCKS: phf::OrderedMap<&'static str, std::ops::RangeInclusive<char>> = phf::phf_ordered_map! {
     "Basic Latin" => BASIC_LATIN,
     "Latin-1 Supplement" => LATIN_1_SUPPLEMENT,
     "Latin Extended-A" => LATIN_EXTENDED_A,
