@@ -202,6 +202,11 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
+    // If any errors have been reported, print an empty line. Visually separates
+    // the below stats summary from the above error printing
+    if global_scan_stats.num_rule_violations > 0 || num_failed_files > 0 {
+        println!("");
+    }
     println!(
         "Scanned {} unicode code points in {} files, resulting in {} rule violations",
         global_scan_stats.num_unicode_code_points,
