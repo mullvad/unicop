@@ -44,7 +44,7 @@ Where `[PATHS]...` is a list of files or directory to check.
 ### Example usage
 
 ```console
-$ unicop example-files/homoglyph.js example-files/invisible.js
+$ unicop example-files/homoglyph.js example-files/invisible.js example-files/not-utf-8-file.ts
 ? failed
   × found disallowed character LATIN LETTER RETROFLEX CLICK in identifier
    ╭─[example-files/homoglyph.js:4:18]
@@ -71,7 +71,10 @@ $ unicop example-files/homoglyph.js example-files/invisible.js
    ·                                      ╰── HANGUL JUNGSEONG FILLER
  6 │    ];
    ╰────
-Scanned 486 unicode code points in 2 files, resulting in 3 rule violations
+Error while scanning example-files/not-utf-8-file.ts: Failed to read file (stream did not contain valid UTF-8)
+Scanned 486 unicode code points in 2 files, resulting in:
+	3 rule violations
+	1 other error
 
 ```
 
