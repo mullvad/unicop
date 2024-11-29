@@ -45,6 +45,7 @@ Where `[PATHS]...` is a list of files or directory to check.
 
 ```console
 $ unicop example-files/homoglyph.js example-files/invisible.js
+? failed
   × found disallowed character LATIN LETTER RETROFLEX CLICK in identifier
    ╭─[example-files/homoglyph.js:4:18]
  3 │ function isUserAdmin(user) {

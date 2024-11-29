@@ -199,6 +199,9 @@ fn main() -> anyhow::Result<()> {
         num_files_scanned,
         global_scan_stats.num_rule_violations,
     );
+    if global_scan_stats.num_rule_violations > 0 {
+        std::process::exit(1);
+    }
     Ok(())
 }
 
