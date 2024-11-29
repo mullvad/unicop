@@ -72,6 +72,7 @@ $ unicop example-files/homoglyph.js example-files/invisible.js example-files/not
  6 │    ];
    ╰────
 Error while scanning example-files/not-utf-8-file.ts: Failed to read file (stream did not contain valid UTF-8)
+
 Scanned 486 unicode code points in 2 files, resulting in 3 rule violations
 Failed to scan 1 file
 
