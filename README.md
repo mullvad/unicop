@@ -70,6 +70,7 @@ $ unicop example-files/homoglyph.js example-files/invisible.js
    ·                                      ╰── HANGUL JUNGSEONG FILLER
  6 │    ];
    ╰────
+Scanned 486 unicode code points in 2 files, resulting in 3 rule violations
 
 ```
 
