@@ -141,12 +141,12 @@ fn main() -> anyhow::Result<()> {
 
     if args.print_unicode_blocks {
         for (&name, range) in &unicode_blocks::UNICODE_BLOCKS {
-            print!("{name}");
             if args.verbose {
                 let range_start = char_to_unicode_notation(*range.start());
                 let range_end = char_to_unicode_notation(*range.end());
-                print!(": {range_start}..{range_end}");
+                print!("{range_start}..{range_end}: ");
             }
+            print!("{name}");
             println!();
         }
         return Ok(());
