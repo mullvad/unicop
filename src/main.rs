@@ -106,7 +106,7 @@ impl RuleDispatcher {
 }
 
 #[derive(Debug, clap::Parser)]
-#[command(arg_required_else_help = true, version)]
+#[command(arg_required_else_help = true, version, about)]
 struct Args {
     /// One or more files or directories to scan. Directories are scanned recursively.
     paths: Vec<PathBuf>,
