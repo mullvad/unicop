@@ -202,26 +202,53 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
+    let found_issue = global_scan_stats.num_rule_violations > 0 || num_failed_files > 0;
+
     // If any errors have been reported, print an empty line. Visually separates
     // the below stats summary from the above error printing
-    if global_scan_stats.num_rule_violations > 0 || num_failed_files > 0 {
-        println!("");
+    if found_issue {
+        println!();
     }
-    println!(
+    let summary_print_style = message_style(found_issue);
+
+    let scan_stats_msg = format!(
         "Scanned {} unicode code points in {} files, resulting in {} rule violations",
         global_scan_stats.num_unicode_code_points,
         num_files_scanned,
         global_scan_stats.num_rule_violations,
     );
+    print_with_style(&scan_stats_msg, summary_print_style);
+
     match num_failed_files {
         0 => (),
-        1 => println!("Failed to scan 1 file"),
-        2.. => println!("Failed to scan {num_failed_files} files"),
+        1 => print_with_style("Failed to scan 1 file", summary_print_style),
+        2.. => print_with_style(
+            &format!("Failed to scan {num_failed_files} files"),
+            summary_print_style,
+        ),
     }
-    if global_scan_stats.num_rule_violations > 0 || num_failed_files > 0 {
+
+    if found_issue {
         std::process::exit(1);
     }
     Ok(())
+}
+
+fn print_with_style(msg: &str, style: owo_colors::Style) {
+    use owo_colors::{OwoColorize, Stream};
+    println!(
+        "{}",
+        msg.if_supports_color(Stream::Stdout, |text| text.style(style))
+    );
+}
+
+fn message_style(found_issue: bool) -> owo_colors::Style {
+    let base_style = owo_colors::Style::new().bold();
+    if found_issue {
+        base_style.red()
+    } else {
+        base_style.green()
+    }
 }
 
 #[derive(Debug)]
