@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -170,6 +171,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let mut num_files_scanned: u64 = 0;
+    let mut num_failed_files: u64 = 0;
     let mut global_scan_stats = ScanStats {
         num_unicode_code_points: 0,
         num_rule_violations: 0,
@@ -181,11 +183,18 @@ fn main() -> anyhow::Result<()> {
                 Ok(entry) if entry.file_type().is_file() => {
                     let entry_path = entry.path();
                     dispatcher.user_config = get_user_config(entry_path)?;
-                    if let Some(scan_stats) = check_file(&dispatcher, entry_path) {
-                        num_files_scanned += 1;
-                        global_scan_stats.num_unicode_code_points +=
-                            scan_stats.num_unicode_code_points;
-                        global_scan_stats.num_rule_violations += scan_stats.num_rule_violations;
+                    match check_file(&dispatcher, entry_path) {
+                        Ok(Some(scan_stats)) => {
+                            num_files_scanned += 1;
+                            global_scan_stats.num_unicode_code_points +=
+                                scan_stats.num_unicode_code_points;
+                            global_scan_stats.num_rule_violations += scan_stats.num_rule_violations;
+                        }
+                        Ok(None) => (),
+                        Err(e) => {
+                            num_failed_files += 1;
+                            eprintln!("Error while scanning {}: {e}", entry_path.display());
+                        }
                     }
                 }
                 Ok(_) => {}
@@ -199,20 +208,51 @@ fn main() -> anyhow::Result<()> {
         num_files_scanned,
         global_scan_stats.num_rule_violations,
     );
-    if global_scan_stats.num_rule_violations > 0 {
+    match num_failed_files {
+        0 => (),
+        1 => println!("Failed to scan 1 file"),
+        2.. => println!("Failed to scan {num_failed_files} files"),
+    }
+    if global_scan_stats.num_rule_violations > 0 || num_failed_files > 0 {
         std::process::exit(1);
     }
     Ok(())
+}
+
+#[derive(Debug)]
+enum ScanError {
+    /// Failed to read the source code file
+    ReadFile(io::Error),
+}
+
+impl fmt::Display for ScanError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use ScanError::*;
+        match self {
+            ReadFile(ref e) => write!(f, "Failed to read file ({e})"),
+        }
+    }
+}
+
+impl std::error::Error for ScanError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ScanError::*;
+        match &self {
+            ReadFile(e) => e.source(),
+        }
+    }
 }
 
 /// Scans a single file at `path` using the rules defined in `dispatcher`.
 ///
 /// If the file was actually scanned (matched a language in the rule dispatcher),
 /// then stats about the scan are returned.
-fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Option<ScanStats> {
-    let lang = dispatcher.language(path)?;
+fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Result<Option<ScanStats>, ScanError> {
+    let Some(lang) = dispatcher.language(path) else {
+        return Ok(None);
+    };
     let filename = path.display().to_string();
-    let src = fs::read_to_string(path).unwrap();
+    let src = fs::read_to_string(path).map_err(ScanError::ReadFile)?;
     let named_source = NamedSource::new(&filename, src.clone());
     let mut parser = tree_sitter::Parser::new();
     parser
@@ -275,7 +315,7 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Option<ScanStats> {
         print!("{:?}", report);
     }
 
-    Some(scan_stats)
+    Ok(Some(scan_stats))
 }
 
 /// Statistics about unicop scans.
