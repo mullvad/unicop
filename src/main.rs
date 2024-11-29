@@ -171,7 +171,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let mut num_files_scanned: u64 = 0;
-    let mut num_errors: u64 = 0;
+    let mut num_failed_files: u64 = 0;
     let mut global_scan_stats = ScanStats {
         num_unicode_code_points: 0,
         num_rule_violations: 0,
@@ -192,7 +192,7 @@ fn main() -> anyhow::Result<()> {
                         }
                         Ok(None) => (),
                         Err(e) => {
-                            num_errors += 1;
+                            num_failed_files += 1;
                             eprintln!("Error while scanning {}: {e}", entry_path.display());
                         }
                     }
@@ -203,18 +203,17 @@ fn main() -> anyhow::Result<()> {
     }
 
     println!(
-        "Scanned {} unicode code points in {} files, resulting in:",
-        global_scan_stats.num_unicode_code_points, num_files_scanned,
-    );
-    println!(
-        "\t{} rule violations",
+        "Scanned {} unicode code points in {} files, resulting in {} rule violations",
+        global_scan_stats.num_unicode_code_points,
+        num_files_scanned,
         global_scan_stats.num_rule_violations,
     );
-    match num_errors {
-        1 => println!("\t1 other error"),
-        _ => println!("\t{num_errors} other errors"),
+    match num_failed_files {
+        0 => (),
+        1 => println!("Failed to scan 1 file"),
+        2.. => println!("Failed to scan {num_failed_files} files"),
     }
-    if global_scan_stats.num_rule_violations > 0 || num_errors > 0 {
+    if global_scan_stats.num_rule_violations > 0 || num_failed_files > 0 {
         std::process::exit(1);
     }
     Ok(())
