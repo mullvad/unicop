@@ -169,6 +169,11 @@ fn main() -> anyhow::Result<()> {
         default_config,
     };
 
+    let mut num_files_scanned: u64 = 0;
+    let mut global_scan_stats = ScanStats {
+        num_unicode_code_points: 0,
+        num_rule_violations: 0,
+    };
     for path in args.paths {
         for entry in walkdir::WalkDir::new(path) {
             match entry {
@@ -176,19 +181,33 @@ fn main() -> anyhow::Result<()> {
                 Ok(entry) if entry.file_type().is_file() => {
                     let entry_path = entry.path();
                     dispatcher.user_config = get_user_config(entry_path)?;
-                    check_file(&dispatcher, entry_path);
+                    if let Some(scan_stats) = check_file(&dispatcher, entry_path) {
+                        num_files_scanned += 1;
+                        global_scan_stats.num_unicode_code_points +=
+                            scan_stats.num_unicode_code_points;
+                        global_scan_stats.num_rule_violations += scan_stats.num_rule_violations;
+                    }
                 }
                 Ok(_) => {}
             }
         }
     }
+
+    println!(
+        "Scanned {} unicode code points in {} files, resulting in {} rule violations",
+        global_scan_stats.num_unicode_code_points,
+        num_files_scanned,
+        global_scan_stats.num_rule_violations,
+    );
     Ok(())
 }
 
-fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
-    let Some(lang) = dispatcher.language(path) else {
-        return;
-    };
+/// Scans a single file at `path` using the rules defined in `dispatcher`.
+///
+/// If the file was actually scanned (matched a language in the rule dispatcher),
+/// then stats about the scan are returned.
+fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Option<ScanStats> {
+    let lang = dispatcher.language(path)?;
     let filename = path.display().to_string();
     let src = fs::read_to_string(path).unwrap();
     let named_source = NamedSource::new(&filename, src.clone());
@@ -197,6 +216,12 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
         .set_language(&lang.grammar())
         .expect("Error loading grammar");
     let tree = parser.parse(&src, None).unwrap();
+
+    let mut scan_stats = ScanStats {
+        num_unicode_code_points: 0,
+        num_rule_violations: 0,
+    };
+
     if tree.root_node().has_error() {
         let mut labels = Vec::new();
         if log::log_enabled!(log::Level::Debug) {
@@ -221,6 +246,7 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
         print!("{:?}", report);
     }
     for (off, ch) in src.char_indices() {
+        scan_stats.num_unicode_code_points += 1;
         let node = tree
             .root_node()
             .named_descendant_for_byte_range(off, off + ch.len_utf8())
@@ -242,8 +268,19 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) {
             node.kind()
         )
         .with_source_code(named_source.clone());
+        scan_stats.num_rule_violations += 1;
         print!("{:?}", report);
     }
+
+    Some(scan_stats)
+}
+
+/// Statistics about unicop scans.
+struct ScanStats {
+    /// Number of unicode code points ([`char`]s) that the scan processed.
+    pub num_unicode_code_points: u64,
+    /// Number of rule violations encountered during the scan.
+    pub num_rule_violations: u64,
 }
 
 fn get_user_config(path: &Path) -> anyhow::Result<Option<Config>> {
