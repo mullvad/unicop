@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions-rust-lang/audit@160ac8b6edd32f74656cabba9d1de3fc8339f676 # v1.2
+      - uses: actions-rust-lang/audit@5c5da92c0334eb692d0735bb94f086fd83e59572 # v1.2.2
         name: Audit Rust Dependencies
         with:
           denyWarnings: true
