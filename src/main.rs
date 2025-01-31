@@ -186,12 +186,17 @@ fn main() -> anyhow::Result<()> {
                     dispatcher.user_config = get_user_config(entry_path)?;
                     match check_file(&dispatcher, entry_path) {
                         Ok(Some(scan_stats)) => {
+                            log::debug!(
+                                "Scanned {} unicode code points in {}",
+                                scan_stats.num_unicode_code_points,
+                                entry_path.display()
+                            );
                             num_files_scanned += 1;
                             global_scan_stats.num_unicode_code_points +=
                                 scan_stats.num_unicode_code_points;
                             global_scan_stats.num_rule_violations += scan_stats.num_rule_violations;
                         }
-                        Ok(None) => (),
+                        Ok(None) => log::trace!("Skipped {}", entry_path.display()),
                         Err(e) => {
                             num_failed_files += 1;
                             eprintln!("Error while scanning {}: {e}", entry_path.display());
