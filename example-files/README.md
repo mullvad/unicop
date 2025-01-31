@@ -25,6 +25,22 @@ $ unicop example-files/
     ·                 ┬
     ·                 ╰── HANGUL JUNGSEONG FILLER
     ╰────
+  × found disallowed character RIGHT-TO-LEFT EMBEDDING in comment
+   ╭─[example-files/hello-trojan-source.c:3:19]
+ 2 │ int main() {
+ 3 │     // Will print ‫Hello World to the terminal
+   ·                   ┬
+   ·                   ╰── RIGHT-TO-LEFT EMBEDDING
+ 4 │    printf("Hello World! 👋");
+   ╰────
+  × found disallowed character RIGHT-TO-LEFT EMBEDDING in comment
+   ╭─[example-files/hello-trojan-source.cpp:4:19]
+ 3 │ int main() {
+ 4 │     // Will print ‫Hello World to the terminal
+   ·                   ┬
+   ·                   ╰── RIGHT-TO-LEFT EMBEDDING
+ 5 │     std::cout << "Hello World! 👋";
+   ╰────
   ⚠ example-files/homoglyph.go: parse error, results might be incorrect
   × found disallowed character LATIN LETTER RETROFLEX CLICK in identifier
    ╭─[example-files/homoglyph.go:7:16]
@@ -75,7 +91,7 @@ $ unicop example-files/
    ╰────
 Error while scanning example-files/not-utf-8-file.ts: Failed to read file (stream did not contain valid UTF-8)
 
-Scanned 1106 unicode code points in 6 files, resulting in 8 rule violations
+Scanned 1361 unicode code points in 8 files, resulting in 10 rule violations
 Failed to scan 1 file
 
 ```
