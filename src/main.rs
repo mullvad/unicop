@@ -493,6 +493,17 @@ fn get_default_config() -> Config {
                 },
             ),
             (
+                Language::Kotlin,
+                config::LanguageRules {
+                    paths: Some(vec![
+                        glob::Pattern::new("**/*.kt").unwrap(),
+                        // For build system stuff.
+                        glob::Pattern::new("**/*.kts").unwrap(),
+                    ]),
+                    rules: Default::default(),
+                },
+            ),
+            (
                 Language::Swift,
                 config::LanguageRules {
                     paths: Some(vec![glob::Pattern::new("**/*.swift").unwrap()]),
