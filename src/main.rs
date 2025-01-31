@@ -430,6 +430,36 @@ fn get_default_config() -> Config {
         },
         language: HashMap::from([
             (
+                Language::C,
+                config::LanguageRules {
+                    paths: Some(vec![glob::Pattern::new("**/*.c").unwrap()]),
+                    rules: Default::default(),
+                },
+            ),
+            (
+                Language::CPlusPlus,
+                config::LanguageRules {
+                    // Various C++ compilers accept a myriad of file extensions.
+                    // This list does not aim to be exhaustive, but to cover the most common ones.
+                    paths: Some(vec![
+                        glob::Pattern::new("**/*.cpp").unwrap(),
+                        // The glob patterns are case-sensitive, and some compilers include uppercase
+                        // CPP in their list of recognized extensions.
+                        glob::Pattern::new("**/*.CPP").unwrap(),
+                        glob::Pattern::new("**/*.c++").unwrap(),
+                        // Yes, captial C is a thing in both GCC and clang for example.
+                        glob::Pattern::new("**/*.C").unwrap(),
+                        glob::Pattern::new("**/*.cc").unwrap(),
+                        glob::Pattern::new("**/*.cxx").unwrap(),
+                        // We'll also scan C++ header files.
+                        glob::Pattern::new("**/*.hpp").unwrap(),
+                        // Both C and C++ commonly use .h. Here we'll scan it as C++ for now since it's a superset of C.
+                        glob::Pattern::new("**/*.h").unwrap(),
+                    ]),
+                    rules: Default::default(),
+                },
+            ),
+            (
                 Language::Rust,
                 config::LanguageRules {
                     paths: Some(vec![glob::Pattern::new("**/*.rs").unwrap()]),
