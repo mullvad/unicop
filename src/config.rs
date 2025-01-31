@@ -74,7 +74,10 @@ pub enum CodeType {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
+// Keep variants in alphabetical order
 pub enum Language {
+    /// The C language
+    C,
     /// C++
     CPlusPlus,
     Go,
@@ -84,6 +87,14 @@ pub enum Language {
     Swift,
     Typescript,
 }
+
+static C_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "comment" => CodeType::Comment,
+
+    "char_literal" => CodeType::StringLiteral,
+    "string_literal" => CodeType::StringLiteral,
+    "string_content" => CodeType::StringLiteral,
+};
 
 static CPP_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "comment" => CodeType::Comment,
@@ -140,6 +151,7 @@ static TYPESCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
 impl Language {
     pub fn lookup_code_type(&self, tree_sitter_code_type: &str) -> Option<CodeType> {
         match self {
+            Language::C => C_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::CPlusPlus => CPP_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Go => GO_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Javascript => JAVASCRIPT_CODE_TYPES.get(tree_sitter_code_type).copied(),
@@ -152,6 +164,7 @@ impl Language {
 
     pub fn grammar(&self) -> tree_sitter::Language {
         match self {
+            Language::C => tree_sitter_c::LANGUAGE.into(),
             Language::CPlusPlus => tree_sitter_cpp::LANGUAGE.into(),
             Language::Go => tree_sitter_go::LANGUAGE.into(),
             Language::Javascript => tree_sitter_javascript::LANGUAGE.into(),

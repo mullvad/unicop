@@ -430,6 +430,17 @@ fn get_default_config() -> Config {
         },
         language: HashMap::from([
             (
+                Language::C,
+                config::LanguageRules {
+                    paths: Some(vec![
+                        glob::Pattern::new("**/*.c").unwrap(),
+                        // Both C and C++ commonly use .h. Here we'll scan it as C for now.
+                        glob::Pattern::new("**/*.h").unwrap(),
+                    ]),
+                    rules: Default::default(),
+                },
+            ),
+            (
                 Language::CPlusPlus,
                 config::LanguageRules {
                     // Various C++ compilers accept a myriad of file extensions.
