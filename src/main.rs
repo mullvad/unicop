@@ -177,7 +177,8 @@ fn main() -> anyhow::Result<()> {
         num_rule_violations: 0,
     };
     for path in args.paths {
-        for entry in walkdir::WalkDir::new(path) {
+        let dir_iterator = walkdir::WalkDir::new(path).sort_by_file_name();
+        for entry in dir_iterator {
             match entry {
                 Err(err) => eprintln!("{:}", err),
                 Ok(entry) if entry.file_type().is_file() => {
