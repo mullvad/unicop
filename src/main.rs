@@ -432,11 +432,7 @@ fn get_default_config() -> Config {
             (
                 Language::C,
                 config::LanguageRules {
-                    paths: Some(vec![
-                        glob::Pattern::new("**/*.c").unwrap(),
-                        // Both C and C++ commonly use .h. Here we'll scan it as C for now.
-                        glob::Pattern::new("**/*.h").unwrap(),
-                    ]),
+                    paths: Some(vec![glob::Pattern::new("**/*.c").unwrap()]),
                     rules: Default::default(),
                 },
             ),
@@ -457,6 +453,8 @@ fn get_default_config() -> Config {
                         glob::Pattern::new("**/*.cxx").unwrap(),
                         // We'll also scan C++ header files.
                         glob::Pattern::new("**/*.hpp").unwrap(),
+                        // Both C and C++ commonly use .h. Here we'll scan it as C++ for now since it's a superset of C.
+                        glob::Pattern::new("**/*.h").unwrap(),
                     ]),
                     rules: Default::default(),
                 },
