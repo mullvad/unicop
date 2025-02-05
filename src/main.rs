@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use clap::Parser;
 use miette::{miette, LabeledSpan, NamedSource, Severity};
+use tree_sitter::StreamingIterator;
 use unic_ucd_name::Name;
 
 use crate::config::{CodeType, Config, Language};
@@ -308,7 +309,8 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Result<Option<ScanSta
         if log::log_enabled!(log::Level::Debug) {
             let query = tree_sitter::Query::new(&lang.grammar(), "(ERROR) @error").unwrap();
             let mut cursor = tree_sitter::QueryCursor::new();
-            for (r#match, _) in cursor.captures(&query, tree.root_node(), src.as_bytes()) {
+            let mut captures = cursor.captures(&query, tree.root_node(), src.as_bytes());
+            while let Some((r#match, _)) = captures.next() {
                 for capture in r#match.captures {
                     labels.push(LabeledSpan::at(
                         capture.node.start_byte()..capture.node.end_byte(),
