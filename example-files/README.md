@@ -41,6 +41,13 @@ $ unicop example-files/
    ·                   ╰── RIGHT-TO-LEFT EMBEDDING
  5 │     std::cout << "Hello World! 👋";
    ╰────
+  × found disallowed character RIGHT-TO-LEFT EMBEDDING in line_comment
+   ╭─[example-files/hello-trojan-source.kt:1:4]
+ 1 │ // ‫Hello world in Kotlin
+   ·    ┬
+   ·    ╰── RIGHT-TO-LEFT EMBEDDING
+ 2 │ 
+   ╰────
   ⚠ example-files/homoglyph.go: parse error, results might be incorrect
   × found disallowed character LATIN LETTER RETROFLEX CLICK in identifier
    ╭─[example-files/homoglyph.go:7:16]
@@ -91,7 +98,7 @@ $ unicop example-files/
    ╰────
 Error while scanning example-files/not-utf-8-file.ts: Failed to read file (stream did not contain valid UTF-8)
 
-Scanned 1361 unicode code points in 8 files, resulting in 10 rule violations
+Scanned 1454 unicode code points in 9 files, resulting in 11 rule violations
 Failed to scan 1 file
 
 ```

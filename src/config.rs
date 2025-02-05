@@ -82,6 +82,7 @@ pub enum Language {
     CPlusPlus,
     Go,
     Javascript,
+    Kotlin,
     Python,
     Rust,
     Swift,
@@ -117,6 +118,16 @@ static JAVASCRIPT_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
     "block_comment" => CodeType::Comment,
 
     "string_fragment" => CodeType::StringLiteral,
+};
+
+static KOTLIN_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
+    "block_comment" => CodeType::Comment,
+    "line_comment" => CodeType::Comment,
+
+    "character_literal" => CodeType::StringLiteral,
+    "string_literal" => CodeType::StringLiteral,
+    "multiline_string_literal" => CodeType::StringLiteral,
+    "string_content" => CodeType::StringLiteral,
 };
 
 static PYTHON_CODE_TYPES: phf::Map<&'static str, CodeType> = phf::phf_map! {
@@ -155,6 +166,7 @@ impl Language {
             Language::CPlusPlus => CPP_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Go => GO_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Javascript => JAVASCRIPT_CODE_TYPES.get(tree_sitter_code_type).copied(),
+            Language::Kotlin => KOTLIN_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Python => PYTHON_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Rust => RUST_CODE_TYPES.get(tree_sitter_code_type).copied(),
             Language::Swift => SWIFT_CODE_TYPES.get(tree_sitter_code_type).copied(),
@@ -168,6 +180,7 @@ impl Language {
             Language::CPlusPlus => tree_sitter_cpp::LANGUAGE.into(),
             Language::Go => tree_sitter_go::LANGUAGE.into(),
             Language::Javascript => tree_sitter_javascript::LANGUAGE.into(),
+            Language::Kotlin => tree_sitter_kotlin_ng::LANGUAGE.into(),
             Language::Python => tree_sitter_python::LANGUAGE.into(),
             Language::Rust => tree_sitter_rust::LANGUAGE.into(),
             Language::Swift => tree_sitter_swift::LANGUAGE.into(),
