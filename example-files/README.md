@@ -7,7 +7,7 @@ These files contain "bad" unicode in various ways.
 You can run `unicop` against this directory to see how it reports errors:
 
 ```console
-$ unicop example-files/
+$ unicop example-files/ -v
 ? failed
   × found disallowed character LATIN LETTER RETROFLEX CLICK in identifier
     ╭─[example-files/examples.ts:11:16]
@@ -97,8 +97,22 @@ $ unicop example-files/
  6 │    ];
    ╰────
 Error while scanning example-files/not-utf-8-file.ts: Failed to read file (stream did not contain valid UTF-8)
+  ⚠ example-files/parse-errors.rs: parse error, results might be incorrect
 
-Scanned 1454 unicode code points in 9 files, resulting in 11 rule violations
+Scanned 1647 unicode code points in 10 files, resulting in 11 rule violations
+2 files had parse errors
 Failed to scan 1 file
+
+```
+
+You can also try it in the more strict mode, where parsing issues result in a failed run:
+
+```console
+$ unicop example-files/parse-errors.rs --deny-parse-errors
+? failed
+  ⚠ example-files/parse-errors.rs: parse error, results might be incorrect
+
+Scanned 193 unicode code points in 1 files, resulting in 0 rule violations
+1 file had parse errors
 
 ```

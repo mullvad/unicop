@@ -134,6 +134,18 @@ struct Args {
     /// Enable more verbose output.
     #[arg(short, long)]
     verbose: bool,
+
+    /// Exit with a non-zero exit code if any parse errors are encountered.
+    ///
+    /// A parse error means that the language grammar can't correctly determine the code type for
+    /// some character(s) in the source code. This results in evaluating those characters with the
+    /// default rules for the language, instead of the code type specific rules.
+    ///
+    /// Parse errors are allowed by default since they both generate a lot of false positives due
+    /// to incomplete grammars, and because they are usually not a security risk. This can only
+    /// be a security risk if the default rules are more permissive than the code type specific rules.
+    #[arg(long)]
+    deny_parse_errors: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -176,6 +188,7 @@ fn main() -> anyhow::Result<()> {
     let mut global_scan_stats = ScanStats {
         num_unicode_code_points: 0,
         num_rule_violations: 0,
+        num_parse_errors: 0,
     };
     for path in args.paths {
         let dir_iterator = walkdir::WalkDir::new(path).sort_by_file_name();
@@ -185,7 +198,11 @@ fn main() -> anyhow::Result<()> {
                 Ok(entry) if entry.file_type().is_file() => {
                     let entry_path = entry.path();
                     dispatcher.user_config = get_user_config(entry_path)?;
-                    match check_file(&dispatcher, entry_path) {
+                    match check_file(
+                        &dispatcher,
+                        entry_path,
+                        args.verbose || args.deny_parse_errors,
+                    ) {
                         Ok(Some(scan_stats)) => {
                             log::debug!(
                                 "Scanned {} unicode code points in {}",
@@ -196,6 +213,7 @@ fn main() -> anyhow::Result<()> {
                             global_scan_stats.num_unicode_code_points +=
                                 scan_stats.num_unicode_code_points;
                             global_scan_stats.num_rule_violations += scan_stats.num_rule_violations;
+                            global_scan_stats.num_parse_errors += scan_stats.num_parse_errors;
                         }
                         Ok(None) => log::trace!("Skipped {}", entry_path.display()),
                         Err(e) => {
@@ -209,7 +227,9 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    let found_issue = global_scan_stats.num_rule_violations > 0 || num_failed_files > 0;
+    let found_issue = global_scan_stats.num_rule_violations > 0
+        || num_failed_files > 0
+        || (global_scan_stats.num_parse_errors > 0 && args.deny_parse_errors);
 
     // If any errors have been reported, print an empty line. Visually separates
     // the below stats summary from the above error printing
@@ -225,6 +245,17 @@ fn main() -> anyhow::Result<()> {
         global_scan_stats.num_rule_violations,
     );
     print_with_style(&scan_stats_msg, summary_print_style);
+
+    // Print number of files that encountered a parse error, if there are any
+    if args.verbose || args.deny_parse_errors {
+        match global_scan_stats.num_parse_errors {
+            0 => (),
+            1 => print_with_style("1 file had parse errors", summary_print_style),
+            n @ 2.. => {
+                print_with_style(&format!("{n} files had parse errors"), summary_print_style)
+            }
+        }
+    }
 
     match num_failed_files {
         0 => (),
@@ -286,7 +317,11 @@ impl std::error::Error for ScanError {
 ///
 /// If the file was actually scanned (matched a language in the rule dispatcher),
 /// then stats about the scan are returned.
-fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Result<Option<ScanStats>, ScanError> {
+fn check_file(
+    dispatcher: &RuleDispatcher,
+    path: &Path,
+    print_parse_error: bool,
+) -> Result<Option<ScanStats>, ScanError> {
     let Some(lang) = dispatcher.language(path) else {
         return Ok(None);
     };
@@ -302,9 +337,11 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Result<Option<ScanSta
     let mut scan_stats = ScanStats {
         num_unicode_code_points: 0,
         num_rule_violations: 0,
+        num_parse_errors: if tree.root_node().has_error() { 1 } else { 0 },
     };
 
-    if tree.root_node().has_error() {
+    // If the parser encountered a parse error, print a warning.
+    if tree.root_node().has_error() && print_parse_error {
         let mut labels = Vec::new();
         if log::log_enabled!(log::Level::Debug) {
             let query = tree_sitter::Query::new(&lang.grammar(), "(ERROR) @error").unwrap();
@@ -328,6 +365,8 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Result<Option<ScanSta
         .with_source_code(named_source.clone());
         print!("{:?}", report);
     }
+
+    // Evaluate each code point in the source code for rule violations.
     for (off, ch) in src.char_indices() {
         scan_stats.num_unicode_code_points += 1;
         let node = tree
@@ -364,6 +403,10 @@ struct ScanStats {
     pub num_unicode_code_points: u64,
     /// Number of rule violations encountered during the scan.
     pub num_rule_violations: u64,
+    /// How many files that had parse errors.
+    // Would ideally be represented as a boolean when returned from `check_file` and an integer
+    // in the global stats. But to avoid two very similar structs for now, we'll just go with integer.
+    pub num_parse_errors: u64,
 }
 
 fn get_user_config(path: &Path) -> anyhow::Result<Option<Config>> {
