@@ -1,0 +1,33 @@
+---
+# Dogfood unicop by running it on itself.
+name: Unicop scanning
+on:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  unicop:
+    # Unicop is not platform specific in any way. The results should be identical
+    # for any input source code, no matter what platform it runs on.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        run: |
+          rustup default stable
+          rustup update stable
+
+      # Replace the git part with an actual crates.io release once available.
+      - name: Install unicop
+        run: |
+          cargo install --locked --git https://github.com/mullvad/unicop/
+          unicop --version
+
+      - name: Check for unwanted unicode
+        # We cannot run the tool against the entire repository root, since there
+        # are plenty of example files intentionally containing rule violations.
+        run: unicop --verbose src/ tests/
