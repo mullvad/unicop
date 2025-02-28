@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use clap::Parser;
-use miette::{miette, LabeledSpan, NamedSource, Severity};
+use miette::{LabeledSpan, NamedSource, Severity, miette};
 use tree_sitter::StreamingIterator;
 use unic_ucd_name::Name;
 
@@ -299,7 +299,7 @@ impl fmt::Display for ScanError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use ScanError::*;
         match self {
-            ReadFile(ref e) => write!(f, "Failed to read file ({e})"),
+            ReadFile(e) => write!(f, "Failed to read file ({e})"),
         }
     }
 }

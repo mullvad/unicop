@@ -15,7 +15,7 @@ jobs:
         # TODO: Add and make Windows work in CI also
         os: [ubuntu-latest, macos-latest]
         # Keep MSRV in sync with rust-version in Cargo.toml
-        rust: [stable, beta, nightly, 1.83.0]
+        rust: [stable, beta, nightly, 1.85.0]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

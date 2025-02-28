@@ -13,8 +13,8 @@ authors = ["Mullvad VPN"]
 repository = "https://github.com/mullvad/unicop"
 license = "GPL-3.0"
 
-edition = "2021"
-rust-version = "1.83.0"
+edition = "2024"
+rust-version = "1.85.0"
 
 [dependencies]
 miette = { version = "7.2.0", features = ["fancy"] }
