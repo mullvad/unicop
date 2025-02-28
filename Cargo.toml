@@ -16,6 +16,8 @@ license = "GPL-3.0"
 edition = "2024"
 rust-version = "1.85.0"
 
+exclude = ["/example-files"]
+
 [dependencies]
 miette = { version = "7.2.0", features = ["fancy"] }
 tree-sitter = "0.25.2"
