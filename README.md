@@ -1,7 +1,7 @@
 # Unicop
 
 Unicop is a tool that scans source code and detects unwanted unicode code points.
-This is used to stop attacks such as [Trojan Source] and attacks where invisible characters
+This is used to detect and prevent attacks such as [Trojan Source] and attacks where invisible characters
 and homoglyphs smuggle backdoors into the program. Here are some examples of articles
 on the topic:
 
@@ -9,13 +9,15 @@ on the topic:
 * [Bleeping Computer](https://www.bleepingcomputer.com/news/security/invisible-characters-could-be-hiding-backdoors-in-your-javascript-code/)
 * [Certitude](https://certitude.consulting/blog/en/invisible-backdoor/)
 
+[Trojan Source]: https://en.wikipedia.org/wiki/Trojan_Source
+
 ## Background and motivation
 
 This tool was written because before it, the only two options to handle the above issues were to:
 1. Not care. or,
-2. Only allow ascii in all your source code.
+2. Only allow ASCII in all your source code.
 
-But this is a bit limiting. The above attack vectors should be taken serious, but there many
+But this is a bit limiting. The above attack vectors should be taken serious, but there are many
 legitimate use cases for non-ASCII unicode code points in source code. Some common uses
 of non-ASCII unicode in source code:
 * Use math symbols and other special symbols in comments to explain how the code works.
@@ -27,13 +29,18 @@ of non-ASCII unicode in source code:
 * Use emojis, math symbols, box drawing symbols etc in string literals for software that
   want to output these symbols for some reason. For example to draw a fancy terminal UI.
 
-[Trojan Source]: https://en.wikipedia.org/wiki/Trojan_Source
+## Installation
+
+If you already have Rust on your machine, you can install `unicop` directly with cargo:
+```ignore
+cargo install --locked unicop
+```
 
 ## Usage
 
 The intended use case is to run this tool in the same places as where you would run automatic
-code analysis, CVE scanners and similar. Probably in your CI pipeline. But of course also
-locally.
+code analysis, CVE scanners and similar. Probably in your [CI pipeline](#running-in-ci).
+But it can of course also be ran locally.
 
 ```sh,ignore
 unicop [PATHS]...
@@ -78,6 +85,40 @@ Failed to scan 1 file
 
 ```
 
+## Running in CI
+
+This is an example of how you can run `unicop` in Github Actions for your repository:
+
+```yml
+---
+name: Malicious unicode scanning
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  unicop:
+    # Unicop is not platform specific in any way. The results should be identical
+    # for any input source code, no matter what platform it runs on.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        run: |
+          rustup default stable
+          rustup update stable
+
+      - name: Install unicop
+        run: |
+          cargo install --locked unicop
+          unicop --version
+
+      - name: Check for unwanted unicode
+        run: unicop --verbose .
+```
+
 ## Configuration
 
 By default, the tool allows anything, except [bidirectional control characters] in comments and
@@ -86,6 +127,26 @@ string literals. In all other code, only ASCII characters are allowed.
 You can configure this behavior in a `unicop.toml` file. `unicop` will use the first `unicop.toml`
 file it can find, starting in the same directory as the file that is being scanned,
 and then traversing up to the parent directory.
+
+There are global config rules and there are language specific config rules. The global rules
+are used when the language specific rules for the scanned code does not explicitly allow
+or deny a specific code point.
+
+Within each language specific rule section there are default rules and rules for specific
+code types. The default rules are used for code that is not of a type that has type specific
+rules, or where the type specific rules does not have an allow or deny verdict about the scanned
+code point.
+
+The rule evaluation order is:
+
+1. Code type specific rules for the specific programming language being scanned
+2. Default rules for the specific programming language being scanned
+3. Code type specific rules in the global section
+4. Default rules in the global section
+
+The language specific sections can also configure glob patterns for what filenames should
+be scanned with that language's parser and rules. These have sane defaults for most languages,
+and should only need to be changed if you name your files something unconventional.
 
 [bidirectional control characters]: https://en.wikipedia.org/wiki/Unicode_control_characters#Bidirectional_text_control
 
@@ -113,7 +174,7 @@ string-literal = { allow = ["*"], deny = ["bidi"] }
 # languages, in this config.
 comment = { allow = ["ascii", "Currency Symbols", "U+1F44D"], deny = ["*"]}
 
-# For everything not comments, Rust falls back to the `global` settings above.
+# For every code point not in a comment, Rust falls back to the `global` settings above.
 
 
 [language.python]
