@@ -97,8 +97,10 @@ $ unicop example-files/ -v
  6 │    ];
    ╰────
 Error while scanning example-files/not-utf-8-file.ts: Failed to read file (stream did not contain valid UTF-8)
+  ⚠ example-files/parse-errors.rs: parse error, results might be incorrect
 
-Scanned 1454 unicode code points in 9 files, resulting in 11 rule violations
+Scanned 1647 unicode code points in 10 files, resulting in 11 rule violations
+2 files had parse errors
 Failed to scan 1 file
 
 ```
