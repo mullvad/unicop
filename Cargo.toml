@@ -44,3 +44,28 @@ tree-sitter-typescript = "0.23.0"
 
 [dev-dependencies]
 trycmd = "0.15.5"
+
+
+[lints.rust]
+# Unless we have a really good reason to use unsafe code in this tool, we should stay away from it.
+unsafe_code = "forbid"
+
+# Security
+non_ascii_idents = "forbid"
+
+# Deny old style Rust
+rust_2018_idioms = { level = "deny", priority = -1 }
+macro_use_extern_crate = "deny"
+absolute_paths_not_starting_with_crate = "deny"
+
+# Easy to read style and opinionated best practices
+explicit_outlives_requirements = "warn"
+single_use_lifetimes = "warn"
+
+# General cleanliness and cleanup
+unused_macro_rules = "warn"
+unused_extern_crates = "deny"
+unused_lifetimes = "warn"
+
+[lints.clippy]
+unused_async = "deny"
