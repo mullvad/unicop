@@ -7,7 +7,7 @@ These files contain "bad" unicode in various ways.
 You can run `unicop` against this directory to see how it reports errors:
 
 ```console
-$ unicop example-files/
+$ unicop example-files/ -v
 ? failed
   × found disallowed character LATIN LETTER RETROFLEX CLICK in identifier
     ╭─[example-files/examples.ts:11:16]

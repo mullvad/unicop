@@ -185,7 +185,7 @@ fn main() -> anyhow::Result<()> {
                 Ok(entry) if entry.file_type().is_file() => {
                     let entry_path = entry.path();
                     dispatcher.user_config = get_user_config(entry_path)?;
-                    match check_file(&dispatcher, entry_path) {
+                    match check_file(&dispatcher, entry_path, args.verbose) {
                         Ok(Some(scan_stats)) => {
                             log::debug!(
                                 "Scanned {} unicode code points in {}",
@@ -286,7 +286,11 @@ impl std::error::Error for ScanError {
 ///
 /// If the file was actually scanned (matched a language in the rule dispatcher),
 /// then stats about the scan are returned.
-fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Result<Option<ScanStats>, ScanError> {
+fn check_file(
+    dispatcher: &RuleDispatcher,
+    path: &Path,
+    verbose: bool,
+) -> Result<Option<ScanStats>, ScanError> {
     let Some(lang) = dispatcher.language(path) else {
         return Ok(None);
     };
@@ -304,7 +308,7 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Result<Option<ScanSta
         num_rule_violations: 0,
     };
 
-    if tree.root_node().has_error() {
+    if tree.root_node().has_error() && verbose {
         let mut labels = Vec::new();
         if log::log_enabled!(log::Level::Debug) {
             let query = tree_sitter::Query::new(&lang.grammar(), "(ERROR) @error").unwrap();
@@ -328,6 +332,7 @@ fn check_file(dispatcher: &RuleDispatcher, path: &Path) -> Result<Option<ScanSta
         .with_source_code(named_source.clone());
         print!("{:?}", report);
     }
+
     for (off, ch) in src.char_indices() {
         scan_stats.num_unicode_code_points += 1;
         let node = tree
