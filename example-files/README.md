@@ -104,3 +104,15 @@ Scanned 1647 unicode code points in 10 files, resulting in 11 rule violations
 Failed to scan 1 file
 
 ```
+
+You can also try it in the more strict mode, where parsing issues result in a failed run:
+
+```console
+$ unicop example-files/parse-errors.rs --deny-parse-errors
+? failed
+  ⚠ example-files/parse-errors.rs: parse error, results might be incorrect
+
+Scanned 193 unicode code points in 1 files, resulting in 0 rule violations
+1 file had parse errors
+
+```
