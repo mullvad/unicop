@@ -23,6 +23,5 @@ jobs:
 
       - name: Clippy check
         env:
-          # TODO: Do not allow dead_code once crate is out of early prototyping stage
-          RUSTFLAGS: --deny warnings --allow dead_code
+          RUSTFLAGS: --deny warnings
         run: cargo clippy --locked --all-targets
