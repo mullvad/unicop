@@ -1,0 +1,49 @@
+---
+name: Self-validation - ASCII only
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  check-ascii-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify source files contain only ASCII characters
+        run: |
+          echo "Checking for non-ASCII characters in all files (excluding markdown and examples)..."
+
+          # Find all files except markdown and examples
+          FILES=$(find . -type f \
+            -not -path "./example-files/*" \
+            -not -path "./.git/*" \
+            -not -path "./UNIDATA/Blocks.txt" \
+            -not -iname "*.md")
+
+          # Matches everything that is *not* ([^...]) a printable ASCII character, space or tab.
+          # ' -~' matches everything from space (ASCII 32) to tilde (ASCII 126)
+          # Then a tab (ASCII 9) character at the end includes tabs.
+          NON_ASCII_PATTERN='[^ -~	]'
+
+          # Check for non-ASCII characters using grep with POSIX character classes
+          NON_ASCII_FILES=""
+          for file in $FILES; do
+            if LC_ALL=C grep -q "$NON_ASCII_PATTERN" "$file"; then
+              echo "FAIL: Non-ASCII characters found in: $file"
+              LC_ALL=C grep -n "$NON_ASCII_PATTERN" "$file"
+              NON_ASCII_FILES="$NON_ASCII_FILES $file"
+            else
+              echo "PASS: ASCII only: $file"
+            fi
+          done
+
+          if [ -n "$NON_ASCII_FILES" ]; then
+            echo ""
+            echo "FAILED: Non-ASCII characters found in source files"
+            echo "Files with non-ASCII characters:$NON_ASCII_FILES"
+            exit 1
+          else
+            echo "SUCCESS: All source files contain only ASCII characters"
+          fi
