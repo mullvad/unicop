@@ -45,7 +45,7 @@ tree-sitter-swift = "0.7.0"
 tree-sitter-typescript = "0.23.2"
 
 [dev-dependencies]
-trycmd = "0.15.5"
+trycmd = "1.2.0"
 
 
 [lints.rust]
