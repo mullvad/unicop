@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Security**: in case of vulnerabilities.
 
 ## [Unreleased]
+
+
+## [0.1.1] - 2026-04-22
 ### Fixed
 - Update language grammar files. Improves parsing and should more accurately classify code
   in its correct category. Reduces "parse error, results might be incorrect" errors.
