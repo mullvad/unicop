@@ -99,7 +99,7 @@ $ unicop example-files/ -v
 Error while scanning example-files/not-utf-8-file.ts: Failed to read file (stream did not contain valid UTF-8)
   ⚠ example-files/parse-errors.rs: parse error, results might be incorrect
 
-Scanned 1647 unicode code points in 10 files, resulting in 11 rule violations
+Scanned 1701 unicode code points in 10 files, resulting in 11 rule violations
 2 files had parse errors
 Failed to scan 1 file
 
@@ -112,7 +112,7 @@ $ unicop example-files/parse-errors.rs --deny-parse-errors
 ? failed
   ⚠ example-files/parse-errors.rs: parse error, results might be incorrect
 
-Scanned 193 unicode code points in 1 files, resulting in 0 rule violations
+Scanned 247 unicode code points in 1 files, resulting in 0 rule violations
 1 file had parse errors
 
 ```
